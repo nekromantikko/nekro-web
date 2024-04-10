@@ -11,6 +11,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+
+      - name: Install emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Build cpp
+        run: |
+          cd web-frontend
+          mkdir src/wasm
+          bash make.sh
       
       - name: Setup Node.js
         uses: actions/setup-node@v2

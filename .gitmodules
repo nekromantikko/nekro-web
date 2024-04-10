@@ -1,0 +1,3 @@
+[submodule "web-frontend/cpp/include/glm"]
+	path = web-frontend/cpp/include/glm
+	url = https://github.com/g-truc/glm.git

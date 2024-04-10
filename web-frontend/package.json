@@ -21,6 +21,27 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "globals": {
+      "globalThis": false
+    },
+    "overrides": [
+      {
+        "files": [
+          "./src/wasm/*"
+        ],
+        "rules": {
+          "no-undef": "off",
+          "no-restricted-globals": "off",
+          "no-unused-vars": "off",
+          "eqeqeq": "off",
+          "no-global-assign": "off",
+          "no-throw-literal": "off",
+          "getter-return": "off",
+          "no-fallthrough": "off",
+          "no-lone-blocks": "off"
+        }
+      }
     ]
   },
   "browserslist": {

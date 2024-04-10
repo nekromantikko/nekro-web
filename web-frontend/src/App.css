@@ -28,6 +28,17 @@
   color: #61dafb;
 }
 
+.asciiBoxContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.asciiBox {
+  width: 45ch;
+  line-break: anywhere;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
