@@ -13,6 +13,12 @@
   }
 }
 
+@media screen and (max-width: 450px){
+  .asciiBoxContainer {
+     font-size: 12px; 
+  }
+}
+
 .App-header {
   background-color: #fff;
   min-height: 100vh;
@@ -36,6 +42,7 @@
 
 .asciiBox {
   width: 45ch;
+  min-width: 45ch;
   line-break: anywhere;
 }
 
