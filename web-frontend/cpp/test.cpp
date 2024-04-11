@@ -31,17 +31,79 @@ int bufferLength = 0;
 
 // Temp
 glm::vec3 cubeVerts[] = {
-    {-1,-1,-1},
-    {1,-1,-1},
-    {1,-1,1},
+    {-1,-1,-1}, // 0
+    {-1,-1,1}, // 1
+    {1,-1,1}, // 2
+    {1,-1,-1}, // 3
+    {-1,1,-1}, // 4
+    {1,1,-1}, // 5
+    {1,1,1}, // 6
+    {-1,1,1}, // 7
     {-1,-1,1},
-    {-1,1,-1},
-    {1,1,-1},
+    {-1,1,1},
     {1,1,1},
-    {-1,1,1}
+    {1,-1,1},
+    {1,1,-1}, // 5
+    {-1,1,-1}, // 4
+    {-1,-1,-1}, // 0
+    {1,-1,-1}, // 3
+    {1,1,1}, // 6
+    {1,1,-1}, // 5
+    {1,-1,-1}, // 3
+    {1,-1,1}, // 2
+    {-1,1,-1}, // 4
+    {-1,1,1}, // 7
+    {-1,-1,1}, // 1
+    {-1,-1,-1}, // 0
 };
 
+glm::vec3 cubeNormals[] = {
+    {0,-1,0},
+    {0,-1,0},
+    {0,-1,0},
+    {0,-1,0},
+    {0,1,0},
+    {0,1,0},
+    {0,1,0},
+    {0,1,0},
+    {0,0,1},
+    {0,0,1},
+    {0,0,1},
+    {0,0,1},
+    {0,0,-1},
+    {0,0,-1},
+    {0,0,-1},
+    {0,0,-1},
+    {1,0,0},
+    {1,0,0},
+    {1,0,0},
+    {1,0,0},
+    {-1,0,0},
+    {-1,0,0},
+    {-1,0,0},
+    {-1,0,0},
+};
+
+int vertCount = 24;
+
 int edges[] = { 0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 1, 5, 2, 6, 3, 7, 4, 5, 5, 6, 6, 7, 7, 4 };
+
+glm::ivec3 tris[] = {
+    {0,1,2},
+    {0,2,3},
+    {4,5,6},
+    {4,6,7},
+    {8,9,10},
+    {8,10,11},
+    {12,13,14},
+    {12,14,15},
+    {16,17,18},
+    {16,18,19},
+    {20,21,22},
+    {20,22,23}
+};
+
+int triCount = 12;
 
 float aspect = 1.0f;
 float fov = 35.0f;
@@ -125,11 +187,51 @@ void bresenhamSteep(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
     }
 }
 
-glm::ivec2 denormalize(glm::vec2 p) {
+glm::ivec2 denormalize(const glm::vec2 &p) {
     return glm::ivec2(floor(p.x * widthChr), floor(p.y * heightChr));
 }
 
-void drawLine(glm::vec2 p0, glm::vec2 p1, float value = 1.0f) {
+glm::vec2 normalize(const glm::ivec2 &pChr) {
+    return glm::vec2((float)pChr.x / widthChr, (float)pChr.y / heightChr);
+}
+
+// Pineda edge function
+float edgeFunc(const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c) {
+    return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+}
+
+void drawTriangleNaive(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &v2, const glm::vec3 &n0, const glm::vec3 &n1, const glm::vec3 &n2) {
+    float area = edgeFunc(v0,v1,v2);
+
+    for (int i = 0; i < bufferLength; i++) {
+        glm::ivec2 pChr(i % widthChr, i / widthChr);
+        glm::vec2 p = normalize(pChr);
+
+        float w0 = edgeFunc(v0,v1,p);
+        float w1 = edgeFunc(v1,v2,p);
+        float w2 = edgeFunc(v2,v0,p);
+
+        bool pointInsideTriangle = w0 >= 0 && w1 >= 0 && w2 >= 0;
+
+        if (pointInsideTriangle) {
+            // Normalize barycentric coordinates
+            w0 /= area;
+            w1 /= area;
+            w2 /= area;
+
+            glm::vec3 normal = w0*n0+w1*n1+w2*n2;
+            glm::vec3 lightDir = glm::normalize(glm::vec3(1,1,1));
+
+            float brightness = glm::clamp(glm::dot(normal, lightDir), 0.0f, 1.0f);
+            brightness *= 0.9f;
+            brightness += 0.1f;
+
+            buffer[i] = getCharFromBrightness(brightness);
+        }
+    }
+}
+
+void drawLine(const glm::vec2 &p0, const glm::vec2 &p1, float value = 1.0f) {
     auto p0Chr = denormalize(p0);
     auto p1Chr = denormalize(p1);
 
@@ -190,24 +292,6 @@ extern "C" {
         if (buffer == nullptr || bufferLength == 0)
             return nullptr;
 
-        // float xOrigin = 0.5f + cos(time)*0.5f;
-        // float yOrigin = 0.5f + sin(time)*0.5f;
-
-        // for (int i = 0; i < bufferLength; i++) {
-        //     int x = i % widthChr;
-        //     int y = i / widthChr;
-
-        //     float u = ((float)x + 0.5f) / widthChr;
-        //     float v = ((float)y + 0.5f) / heightChr;
-
-        //     float xDist = u - xOrigin;
-        //     float yDist = v - yOrigin;
-        //     float dist = sqrt(xDist*xDist + yDist*yDist);
-
-        //     float brightness = std::clamp(dist, 0.0f, 1.0f);
-
-        //     buffer[i] = getCharFromBrightness(brightness);
-        // }
         clearBuffer(0.0f);
 
         glm::mat4 cameraTransformMat(1.0f);
@@ -216,14 +300,16 @@ extern "C" {
         glm::mat4 perspMat = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
 
         glm::mat4 modelMat(1.0f);
-        modelMat = glm::rotate(modelMat, time, glm::vec3(1,1,1));
+        float angle = time * 0.0005;
+        modelMat = glm::rotate(modelMat, angle, glm::vec3(1,0,0));
+        modelMat = glm::rotate(modelMat, angle*2, glm::vec3(0,1,0));
+        modelMat = glm::rotate(modelMat, angle*3, glm::vec3(0,0,1));
 
-        // float x = (sin(time) + 1.0f) / 2;
-        // drawLineVertical(x, 0.25f, 0.75f);
-        // drawLineHorizontal(x, 0.25f, 0.75f);
+        glm::mat4 normalMat = glm::transpose(glm::inverse(modelMat));
 
-        glm::vec2 transformedPts[8];
-        for (int i = 0; i < 8; i++) {
+        glm::vec2 transformedPts[vertCount];
+        glm::vec3 transformedNrm[vertCount];
+        for (int i = 0; i < vertCount; i++) {
             glm::vec4 clipPos = perspMat * viewMat * modelMat * glm::vec4(cubeVerts[i], 1.0f);
             clipPos /= clipPos.w;
             // Normalize
@@ -231,17 +317,27 @@ extern "C" {
             float y = clipPos.y * 0.5f + 0.5f;
 
             transformedPts[i] = glm::vec2(x,y);
-            // drawPoint(transformedPts[i]);
+
+            glm::vec4 transNorm = normalMat * glm::vec4(cubeNormals[i], 0.0f);
+            transformedNrm[i] = glm::vec3(transNorm.x,transNorm.y,transNorm.z);
         }
 
-        for (int i = 0; i < 24; i += 2) {
-            int p0Ind = edges[i];
-            int p1Ind = edges[i+1];
-            drawLine(transformedPts[p0Ind], transformedPts[p1Ind], 0.25f);
-        }
+        // for (int i = 0; i < 24; i += 2) {
+        //     int p0Ind = edges[i];
+        //     int p1Ind = edges[i+1];
+        //     drawLine(transformedPts[p0Ind], transformedPts[p1Ind], 0.25f);
+        // }
 
-        for (int i = 0; i < 8; i++) {
-            drawPoint(transformedPts[i]);
+        // for (int i = 0; i < 8; i++) {
+        //     drawPoint(transformedPts[i]);
+        // }
+
+        for (int i = 0; i < triCount; i++) {
+            int p0Ind = tris[i].x;
+            int p1Ind = tris[i].y;
+            int p2Ind = tris[i].z;
+
+            drawTriangleNaive(transformedPts[p0Ind], transformedPts[p1Ind], transformedPts[p2Ind], transformedNrm[p0Ind], transformedNrm[p1Ind], transformedNrm[p2Ind]);
         }
         
         return buffer;

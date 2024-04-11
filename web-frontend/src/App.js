@@ -17,7 +17,7 @@ const App = () => {
     const updateFunc = wasmModuleInstance.cwrap('update', 'string', ['number']);
 
     const animate = (time) => {
-      const res = updateFunc(time * 0.001);
+      const res = updateFunc(time);
       setStr(res);
 
       requestRef.current = requestAnimationFrame(animate);
