@@ -25,85 +25,14 @@ void consoleLog(const char* fmt, ...) {
 const char* asciiCharsByBrightness = ".-:|/]o8#";
 
 char* buffer = nullptr;
+float* zbuffer = nullptr;
 int widthChr = 0;
 int heightChr = 0;
 int bufferLength = 0;
 
-// Temp
-glm::vec3 cubeVerts[] = {
-    {-1,-1,-1}, // 0
-    {-1,-1,1}, // 1
-    {1,-1,1}, // 2
-    {1,-1,-1}, // 3
-    {-1,1,-1}, // 4
-    {1,1,-1}, // 5
-    {1,1,1}, // 6
-    {-1,1,1}, // 7
-    {-1,-1,1},
-    {-1,1,1},
-    {1,1,1},
-    {1,-1,1},
-    {1,1,-1}, // 5
-    {-1,1,-1}, // 4
-    {-1,-1,-1}, // 0
-    {1,-1,-1}, // 3
-    {1,1,1}, // 6
-    {1,1,-1}, // 5
-    {1,-1,-1}, // 3
-    {1,-1,1}, // 2
-    {-1,1,-1}, // 4
-    {-1,1,1}, // 7
-    {-1,-1,1}, // 1
-    {-1,-1,-1}, // 0
-};
-
-glm::vec3 cubeNormals[] = {
-    {0,-1,0},
-    {0,-1,0},
-    {0,-1,0},
-    {0,-1,0},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0},
-    {0,1,0},
-    {0,0,1},
-    {0,0,1},
-    {0,0,1},
-    {0,0,1},
-    {0,0,-1},
-    {0,0,-1},
-    {0,0,-1},
-    {0,0,-1},
-    {1,0,0},
-    {1,0,0},
-    {1,0,0},
-    {1,0,0},
-    {-1,0,0},
-    {-1,0,0},
-    {-1,0,0},
-    {-1,0,0},
-};
-
-int vertCount = 24;
-
-int edges[] = { 0, 1, 1, 2, 2, 3, 3, 0, 0, 4, 1, 5, 2, 6, 3, 7, 4, 5, 5, 6, 6, 7, 7, 4 };
-
-glm::ivec3 tris[] = {
-    {0,1,2},
-    {0,2,3},
-    {4,5,6},
-    {4,6,7},
-    {8,9,10},
-    {8,10,11},
-    {12,13,14},
-    {12,14,15},
-    {16,17,18},
-    {16,18,19},
-    {20,21,22},
-    {20,22,23}
-};
-
-int triCount = 12;
+int vertexCount = 0;
+glm::vec3 *positions = nullptr;
+glm::vec3 *normals = nullptr;
 
 float aspect = 1.0f;
 float fov = 35.0f;
@@ -116,9 +45,17 @@ int getCharFromBrightness(float value) {
     return asciiCharsByBrightness[ind];
 }
 
-void clearBuffer(float value) {
+float remap(float value, float min1, float max1, float min2, float max2) {
+    return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
+void clearBuffer(float value, float z) {
     const char chr = getCharFromBrightness(value);
     memset(buffer, chr, bufferLength);
+
+    for (int i = 0; i < bufferLength; i++) {
+        zbuffer[i] = z;
+    }
 }
 
 void drawLineVertical(int xChr, int y0Chr, int y1Chr, float value = 1.0f) {
@@ -188,11 +125,11 @@ void bresenhamSteep(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
 }
 
 glm::ivec2 denormalize(const glm::vec2 &p) {
-    return glm::ivec2(floor(p.x * widthChr), floor(p.y * heightChr));
+    return glm::ivec2(round(p.x * widthChr), heightChr - round(p.y * heightChr));
 }
 
 glm::vec2 normalize(const glm::ivec2 &pChr) {
-    return glm::vec2((float)pChr.x / widthChr, (float)pChr.y / heightChr);
+    return glm::vec2((float)pChr.x / widthChr, 1.0f - (float)pChr.y / heightChr);
 }
 
 // Pineda edge function
@@ -200,16 +137,29 @@ float edgeFunc(const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c) {
     return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-void drawTriangleNaive(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2 &v2, const glm::vec3 &n0, const glm::vec3 &n1, const glm::vec3 &n2) {
+void drawTriangleNaive(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec3 &n0, const glm::vec3 &n1, const glm::vec3 &n2) {
     float area = edgeFunc(v0,v1,v2);
 
-    for (int i = 0; i < bufferLength; i++) {
+    glm::ivec2 v0Chr = denormalize(v0);
+    glm::ivec2 v1Chr = denormalize(v1);
+    glm::ivec2 v2Chr = denormalize(v2);
+
+    glm::ivec2 minCoord(std::min(std::min(v0Chr.x, v1Chr.x), v2Chr.x),std::min(std::min(v0Chr.y, v1Chr.y), v2Chr.y));
+    glm::ivec2 maxCoord(std::max(std::max(v0Chr.x, v1Chr.x), v2Chr.x),std::max(std::max(v0Chr.y, v1Chr.y), v2Chr.y));
+
+    int startInd = minCoord.y * widthChr + minCoord.x;
+    int endInd = maxCoord.y * widthChr + maxCoord.x;
+    // consoleLog("drawing triangle (%f,%f), (%f,%f), (%f,%f)", v0.x, v0.y, v1.x, v1.y, v2.x, v2.y);
+    // consoleLog("(%d - %d)", startInd, endInd);
+    // consoleLog("END");
+
+    for (int i = startInd; i <= endInd; i++) {
         glm::ivec2 pChr(i % widthChr, i / widthChr);
         glm::vec2 p = normalize(pChr);
 
-        float w0 = edgeFunc(v0,v1,p);
-        float w1 = edgeFunc(v1,v2,p);
-        float w2 = edgeFunc(v2,v0,p);
+        float w0 = edgeFunc(glm::vec2(v0),glm::vec2(v1),p);
+        float w1 = edgeFunc(glm::vec2(v1),glm::vec2(v2),p);
+        float w2 = edgeFunc(glm::vec2(v2),glm::vec2(v0),p);
 
         bool pointInsideTriangle = w0 >= 0 && w1 >= 0 && w2 >= 0;
 
@@ -220,13 +170,25 @@ void drawTriangleNaive(const glm::vec2 &v0, const glm::vec2 &v1, const glm::vec2
             w2 /= area;
 
             glm::vec3 normal = w0*n0+w1*n1+w2*n2;
-            glm::vec3 lightDir = glm::normalize(glm::vec3(1,1,1));
+            glm::vec3 lightDir = glm::normalize(glm::vec3(0,0,-1));
+            float depth = w0*v0.z+w1*v1.z+w2*v2.z;
+            depth = remap(depth, nearClip, farClip, 0.0f, 1.0f);
+            // consoleLog("fragment depth %f, zbuffer value %f", depth, zbuffer[i]);
+
+            if (depth >= zbuffer[i]) {
+                continue;
+            }
+
+            // Cull le backface (stupid)
+            if (normal.z >= 0) {
+                continue;
+            }
 
             float brightness = glm::clamp(glm::dot(normal, lightDir), 0.0f, 1.0f);
-            brightness *= 0.9f;
-            brightness += 0.1f;
+            brightness = remap(brightness, 0.0f, 1.0f, 0.1f, 1.0f);
 
             buffer[i] = getCharFromBrightness(brightness);
+            zbuffer[i] = depth;
         }
     }
 }
@@ -277,48 +239,59 @@ void drawPoint(glm::vec2 p, float value = 1.0f) {
 }
 
 extern "C" {
-    EMSCRIPTEN_KEEPALIVE void init(int width, int height) {
+    EMSCRIPTEN_KEEPALIVE void init(int width, int height, int verts, float* pos, float* norm) {
         widthChr = width;
         heightChr = height;
         bufferLength = width*height;
         buffer = (char*)calloc(bufferLength+1, sizeof(char));
+        zbuffer = (float*)calloc(bufferLength, sizeof(float));
+
+        positions = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
+        memcpy(positions, pos, sizeof(glm::vec3)*verts);
+        normals = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
+        memcpy(normals, norm, sizeof(glm::vec3)*verts);
+        vertexCount = verts;
     }
 
     EMSCRIPTEN_KEEPALIVE void deinit() {
         free(buffer);
+        free(zbuffer);
+
+        free(positions);
+        free(normals);
     }
 
     EMSCRIPTEN_KEEPALIVE char* update(float time) {
         if (buffer == nullptr || bufferLength == 0)
             return nullptr;
 
-        clearBuffer(0.0f);
+        clearBuffer(0.0f, 1.0f);
 
         glm::mat4 cameraTransformMat(1.0f);
-        cameraTransformMat = glm::translate(cameraTransformMat, glm::vec3(0,0,7.5f));
+        cameraTransformMat = glm::translate(cameraTransformMat, glm::vec3(0,0,5.0f));
         glm::mat4 viewMat = glm::inverse(cameraTransformMat);
         glm::mat4 perspMat = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
 
         glm::mat4 modelMat(1.0f);
         float angle = time * 0.0005;
-        modelMat = glm::rotate(modelMat, angle, glm::vec3(1,0,0));
-        modelMat = glm::rotate(modelMat, angle*2, glm::vec3(0,1,0));
-        modelMat = glm::rotate(modelMat, angle*3, glm::vec3(0,0,1));
+        modelMat = glm::rotate(modelMat, angle*2, glm::vec3(1,0,0));
+        modelMat = glm::rotate(modelMat, angle*2, glm::vec3(0,-1,0));
+        // modelMat = glm::rotate(modelMat, angle*3, glm::vec3(0,0,1));
 
         glm::mat4 normalMat = glm::transpose(glm::inverse(modelMat));
 
-        glm::vec2 transformedPts[vertCount];
-        glm::vec3 transformedNrm[vertCount];
-        for (int i = 0; i < vertCount; i++) {
-            glm::vec4 clipPos = perspMat * viewMat * modelMat * glm::vec4(cubeVerts[i], 1.0f);
+        glm::vec3 transformedPts[vertexCount];
+        glm::vec3 transformedNrm[vertexCount];
+        for (int i = 0; i < vertexCount; i++) {
+            glm::vec4 clipPos = perspMat * viewMat * modelMat * glm::vec4(positions[i], 1.0f);
             clipPos /= clipPos.w;
             // Normalize
-            float x = clipPos.x * 0.5f + 0.5f;
-            float y = clipPos.y * 0.5f + 0.5f;
+            float x = remap(clipPos.x, -1.0f, 1.0f, 0.0f, 1.0f);
+            float y = remap(clipPos.y, -1.0f, 1.0f, 0.0f, 1.0f);
 
-            transformedPts[i] = glm::vec2(x,y);
-
-            glm::vec4 transNorm = normalMat * glm::vec4(cubeNormals[i], 0.0f);
+            transformedPts[i] = glm::vec3(x,y,clipPos.z);
+            
+            glm::vec4 transNorm = normalMat * glm::vec4(normals[i], 0.0f);
             transformedNrm[i] = glm::vec3(transNorm.x,transNorm.y,transNorm.z);
         }
 
@@ -332,12 +305,8 @@ extern "C" {
         //     drawPoint(transformedPts[i]);
         // }
 
-        for (int i = 0; i < triCount; i++) {
-            int p0Ind = tris[i].x;
-            int p1Ind = tris[i].y;
-            int p2Ind = tris[i].z;
-
-            drawTriangleNaive(transformedPts[p0Ind], transformedPts[p1Ind], transformedPts[p2Ind], transformedNrm[p0Ind], transformedNrm[p1Ind], transformedNrm[p2Ind]);
+        for (int i = 0; i < vertexCount; i+=3) {
+            drawTriangleNaive(transformedPts[i], transformedPts[i+1], transformedPts[i+2], transformedNrm[i], transformedNrm[i+1], transformedNrm[i+2]);
         }
         
         return buffer;
