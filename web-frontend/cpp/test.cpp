@@ -146,49 +146,55 @@ void drawTriangleNaive(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3
 
     glm::ivec2 minCoord(std::min(std::min(v0Chr.x, v1Chr.x), v2Chr.x),std::min(std::min(v0Chr.y, v1Chr.y), v2Chr.y));
     glm::ivec2 maxCoord(std::max(std::max(v0Chr.x, v1Chr.x), v2Chr.x),std::max(std::max(v0Chr.y, v1Chr.y), v2Chr.y));
-
-    int startInd = minCoord.y * widthChr + minCoord.x;
-    int endInd = maxCoord.y * widthChr + maxCoord.x;
     // consoleLog("drawing triangle (%f,%f), (%f,%f), (%f,%f)", v0.x, v0.y, v1.x, v1.y, v2.x, v2.y);
     // consoleLog("(%d - %d)", startInd, endInd);
     // consoleLog("END");
 
-    for (int i = startInd; i <= endInd; i++) {
-        glm::ivec2 pChr(i % widthChr, i / widthChr);
+    const float xStep = normalize(glm::ivec2(1,1)).x;
+
+    for (int y = minCoord.y; y <= maxCoord.y; y++) {
+        int x = minCoord.x;
+        glm::ivec2 pChr(x,y);
         glm::vec2 p = normalize(pChr);
+
+        const float w0Step = (v1.y - v0.y) * xStep;
+        const float w1Step = (v2.y - v1.y) * xStep;
+        const float w2Step = (v0.y - v2.y) * xStep;
 
         float w0 = edgeFunc(glm::vec2(v0),glm::vec2(v1),p);
         float w1 = edgeFunc(glm::vec2(v1),glm::vec2(v2),p);
         float w2 = edgeFunc(glm::vec2(v2),glm::vec2(v0),p);
 
-        bool pointInsideTriangle = w0 >= 0 && w1 >= 0 && w2 >= 0;
+        int i = y * widthChr + x;
 
-        if (pointInsideTriangle) {
-            // Normalize barycentric coordinates
-            w0 /= area;
-            w1 /= area;
-            w2 /= area;
+        for (; x <= maxCoord.x; x++, w0+=w0Step, w1+=w1Step, w2+=w2Step, i++) {
+            bool pointInsideTriangle = w0 >= 0 && w1 >= 0 && w2 >= 0;
 
-            glm::vec3 normal = w0*n0+w1*n1+w2*n2;
-            glm::vec3 lightDir = glm::normalize(glm::vec3(0,0,-1));
-            float depth = w0*v0.z+w1*v1.z+w2*v2.z;
-            depth = remap(depth, nearClip, farClip, 0.0f, 1.0f);
-            // consoleLog("fragment depth %f, zbuffer value %f", depth, zbuffer[i]);
+            if (pointInsideTriangle) {
+                glm::vec3 normal = w0*n0+w1*n1+w2*n2;
+                // Normalize barycentric coordinates
+                normal /= area;
+                glm::vec3 lightDir = glm::normalize(glm::vec3(0,0,-1));
+                float depth = w0*v0.z+w1*v1.z+w2*v2.z;
+                depth /= area;
+                depth = remap(depth, nearClip, farClip, 0.0f, 1.0f);
+                // consoleLog("fragment depth %f, zbuffer value %f", depth, zbuffer[i]);
 
-            if (depth >= zbuffer[i]) {
-                continue;
+                if (depth >= zbuffer[i]) {
+                    continue;
+                }
+
+                // Cull le backface (stupid)
+                if (normal.z >= 0) {
+                    continue;
+                }
+
+                float brightness = glm::clamp(glm::dot(normal, lightDir), 0.0f, 1.0f);
+                brightness = remap(brightness, 0.0f, 1.0f, 0.1f, 1.0f);
+
+                buffer[i] = getCharFromBrightness(brightness);
+                zbuffer[i] = depth;
             }
-
-            // Cull le backface (stupid)
-            if (normal.z >= 0) {
-                continue;
-            }
-
-            float brightness = glm::clamp(glm::dot(normal, lightDir), 0.0f, 1.0f);
-            brightness = remap(brightness, 0.0f, 1.0f, 0.1f, 1.0f);
-
-            buffer[i] = getCharFromBrightness(brightness);
-            zbuffer[i] = depth;
         }
     }
 }
