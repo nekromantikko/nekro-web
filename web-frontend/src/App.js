@@ -15,7 +15,7 @@ const App = () => {
     <div className='App'>
       <AsciiRenderer />
       <h2>Joona Pääkkönen</h2>
-      <p>lorem ipsum and whatever something something</p>
+      <p>3D generalist, technical artist, software developer</p>
       <div className='linkContainer'>
         <LogoLink url='https://www.artstation.com/jpr' img={artstation} alt='artstation' />
         <LogoLink url='https://github.com/nekromantikko' img={github} alt='github' />
