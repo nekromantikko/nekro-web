@@ -6,7 +6,7 @@ import WasmBinary from './wasm/test.wasm';
 
 import { OBJLoader } from '@loaders.gl/obj';
 import { load } from '@loaders.gl/core';
-import logo from './obj/logo_reverse.obj';
+import logo from './obj/logo.obj';
 
 const wasmModuleInstance = await WasmWrapper({
     locateFile: () => WasmBinary

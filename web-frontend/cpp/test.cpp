@@ -125,11 +125,11 @@ void bresenhamSteep(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
 }
 
 glm::ivec2 denormalize(const glm::vec2 &p) {
-    return glm::ivec2(round(p.x * widthChr), heightChr - round(p.y * heightChr));
+    return glm::ivec2(round(p.x * widthChr), round(p.y * heightChr));
 }
 
 glm::vec2 normalize(const glm::ivec2 &pChr) {
-    return glm::vec2((float)pChr.x / widthChr, 1.0f - (float)pChr.y / heightChr);
+    return glm::vec2((float)pChr.x / widthChr, (float)pChr.y / heightChr);
 }
 
 // Pineda edge function
@@ -174,7 +174,7 @@ void drawTriangleNaive(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3
                 glm::vec3 normal = w0*n0+w1*n1+w2*n2;
                 // Normalize barycentric coordinates
                 normal /= area;
-                glm::vec3 lightDir = glm::normalize(glm::vec3(0,0,-1));
+                glm::vec3 lightDir = glm::normalize(glm::vec3(0,0,1));
                 float depth = w0*v0.z+w1*v1.z+w2*v2.z;
                 depth /= area;
                 depth = remap(depth, nearClip, farClip, 0.0f, 1.0f);
@@ -185,7 +185,7 @@ void drawTriangleNaive(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3
                 }
 
                 // Cull le backface (stupid)
-                if (normal.z >= 0) {
+                if (normal.z <= 0) {
                     continue;
                 }
 
@@ -277,6 +277,7 @@ extern "C" {
         cameraTransformMat = glm::translate(cameraTransformMat, glm::vec3(0,0,5.0f));
         glm::mat4 viewMat = glm::inverse(cameraTransformMat);
         glm::mat4 perspMat = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
+        perspMat[1][1] *= -1;
 
         glm::mat4 modelMat(1.0f);
         float angle = time * 0.0005;
