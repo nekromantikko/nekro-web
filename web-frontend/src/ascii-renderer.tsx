@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 
-import WasmWrapper from './wasm/test.js';
-import WasmBinary from './wasm/test.wasm';
+import WasmWrapper from './wasm/ascii-renderer.js';
+import WasmBinary from './wasm/ascii-renderer.wasm';
 
 import { OBJLoader } from '@loaders.gl/obj';
 import { load } from '@loaders.gl/core';
