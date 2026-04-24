@@ -6,13 +6,13 @@ import logoUrl from './obj/logo.obj?url';
 import { OBJLoader } from '@loaders.gl/obj';
 import { load } from '@loaders.gl/core';
 
-const wasmModule = await asciiRendererFactory({ locateFile: () => wasmUrl });
-
-const initFunc = wasmModule.cwrap('init', null, ['number', 'number', 'number', 'array', 'array']);
-const deinitFunc = wasmModule.cwrap('deinit', null);
-const updateFunc = wasmModule.cwrap('update', 'string', ['number']);
-
 export async function startRenderer(outputEl: HTMLElement): Promise<() => void> {
+    const wasmModule = await asciiRendererFactory({ locateFile: () => wasmUrl });
+
+    const initFunc = wasmModule.cwrap('init', null, ['number', 'number', 'number', 'array', 'array']);
+    const deinitFunc = wasmModule.cwrap('deinit', null);
+    const updateFunc = wasmModule.cwrap('update', 'string', ['number']);
+
     const data = await load(logoUrl, OBJLoader);
 
     const vertexCount: number = data.header?.vertexCount ?? 0;
