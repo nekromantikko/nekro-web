@@ -9,6 +9,9 @@
 /coverage
 
 # production
+/dist
+
+# cmake build
 /build
 
 # misc
