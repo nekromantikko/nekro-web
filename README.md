@@ -3,6 +3,8 @@ Personal portfolio website. Features a 3D ASCII renderer written in C++, compile
 
 ## Prerequisites
 - [Node.js](https://nodejs.org/) (v20+)
+- [CMake](https://cmake.org/) (v3.14+)
+- [Ninja](https://ninja-build.org/)
 - [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) (for building the C++ renderer)
 
 ## Building the C++ renderer
@@ -11,15 +13,15 @@ First, activate emsdk in your terminal ([instructions](https://emscripten.org/do
 
 On Windows (CMD/PowerShell):
 ```
-make.bat
+build.bat
 ```
 
 On Linux/macOS (or Git Bash on Windows):
 ```
-bash make.sh
+bash build.sh
 ```
 
-This compiles `cpp/ascii-renderer.cpp` and outputs `src/wasm/ascii-renderer.js` and `src/wasm/ascii-renderer.wasm`.
+CMake will fetch GLM automatically on the first run. Output is written to `src/wasm/ascii-renderer.js` and `src/wasm/ascii-renderer.wasm`.
 
 ## Running locally
 
