@@ -1,7 +1,5 @@
 #include <cstdlib>
 #include <cstring>
-#include <cmath>
-#include <algorithm>
 #include <emscripten/emscripten.h>
 
 #define GLM_FORCE_RADIANS
@@ -13,7 +11,7 @@ EM_JS(void, consoleLog_internal, (const char* msg), {
     console.log(UTF8ToString(msg));
 });
 
-void consoleLog(const char* fmt, ...) {
+static void consoleLog(const char* fmt, ...) {
     char s[1025];
     va_list args;
     va_start(args, fmt);
@@ -25,58 +23,66 @@ void consoleLog(const char* fmt, ...) {
 constexpr int BRIGHTNESS_LEVEL_COUNT = 9;
 constexpr char asciiCharsByBrightness[BRIGHTNESS_LEVEL_COUNT] = {'.', '-', ':', '|', '/', ']', 'o', '8', '#'};
 
-char* buffer = nullptr;
-float* zbuffer = nullptr;
-int widthChr = 0;
-int heightChr = 0;
-int bufferLength = 0;
+struct State {
+    char* buffer = nullptr;
+    float* zbuffer = nullptr;
+    int width = 0;
+    int height = 0;
+    int bufferLength = 0;
 
-int vertexCount = 0;
-glm::vec3 *positions = nullptr;
-glm::vec3 *normals = nullptr;
+    int vertexCount = 0;
+    glm::vec3* positions = nullptr;
+    glm::vec3* normals = nullptr;
+    glm::vec3* transformedPts = nullptr;
+    glm::vec3* transformedNrm = nullptr;
 
-float aspect = 1.0f;
-float fov = 35.0f;
-float nearClip = 0.01f;
-float farClip = 100.0f;
+    float aspect = 1.0f;
+    float fov = 35.0f;
+    float nearClip = 0.01f;
+    float farClip = 100.0f;
 
-char getCharFromBrightness(float value) {
+    glm::vec3 lightDir = glm::vec3(0.0f, 0.0f, 1.0f);
+};
+
+static State state;
+
+static char getCharFromBrightness(float value) {
     int ind = (int)glm::round(value * (BRIGHTNESS_LEVEL_COUNT - 1));
     return asciiCharsByBrightness[ind];
 }
 
-float remap(float value, float min1, float max1, float min2, float max2) {
+static float remap(float value, float min1, float max1, float min2, float max2) {
     return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
 }
 
-void clearBuffer(float value, float z) {
+static void clearBuffer(float value, float z) {
     const char chr = getCharFromBrightness(value);
-    memset(buffer, chr, bufferLength);
+    memset(state.buffer, chr, state.bufferLength);
 
-    for (int i = 0; i < bufferLength; i++) {
-        zbuffer[i] = z;
+    for (int i = 0; i < state.bufferLength; i++) {
+        state.zbuffer[i] = z;
     }
 }
 
-void drawLineVertical(int xChr, int y0Chr, int y1Chr, float value = 1.0f) {
-    int startInd = y0Chr * widthChr + xChr;
-    int endInd = y1Chr * widthChr + xChr;
+static void drawLineVertical(int xChr, int y0Chr, int y1Chr, float value = 1.0f) {
+    int startInd = y0Chr * state.width + xChr;
+    int endInd = y1Chr * state.width + xChr;
 
-    for (int i = startInd; i < endInd && i < bufferLength; i += widthChr) {
-        buffer[i] = getCharFromBrightness(value);
+    for (int i = startInd; i < endInd && i < state.bufferLength; i += state.width) {
+        state.buffer[i] = getCharFromBrightness(value);
     }
 }
 
-void drawLineHorizontal(int yChr, int x0Chr, int x1Chr, float value = 1.0f) {
-    int startInd = yChr * widthChr + x0Chr;
-    int endInd = yChr * widthChr + x1Chr;
+static void drawLineHorizontal(int yChr, int x0Chr, int x1Chr, float value = 1.0f) {
+    int startInd = yChr * state.width + x0Chr;
+    int endInd = yChr * state.width + x1Chr;
 
-    for (int i = startInd; i < endInd && i < bufferLength; i++) {
-        buffer[i] = getCharFromBrightness(value);
+    for (int i = startInd; i < endInd && i < state.bufferLength; i++) {
+        state.buffer[i] = getCharFromBrightness(value);
     }
 }
 
-void bresenham(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
+static void bresenham(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
     int dx = p1.x - p0.x;
     int dy = p1.y - p0.y;
     int dir = 1;
@@ -88,8 +94,8 @@ void bresenham(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
     int err = 2 * dy - dx;
 
     for (int x = p0.x, y = p0.y; x < p1.x; x++) {
-        int ind = y * widthChr + x;
-        buffer[ind] = getCharFromBrightness(value);
+        int ind = y * state.width + x;
+        state.buffer[ind] = getCharFromBrightness(value);
 
         if (err > 0) {
             y += dir;
@@ -100,7 +106,7 @@ void bresenham(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
     }
 }
 
-void bresenhamSteep(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
+static void bresenhamSteep(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
     int dx = p1.x - p0.x;
     int dy = p1.y - p0.y;
     int dir = 1;
@@ -112,8 +118,8 @@ void bresenhamSteep(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
     int err = 2 * dx - dy;
 
     for (int x = p0.x, y = p0.y; y < p1.y; y++) {
-        int ind = y * widthChr + x;
-        buffer[ind] = getCharFromBrightness(value);
+        int ind = y * state.width + x;
+        state.buffer[ind] = getCharFromBrightness(value);
 
         if (err > 0) {
             x += dir;
@@ -124,67 +130,58 @@ void bresenhamSteep(glm::ivec2 p0, glm::ivec2 p1, float value = 1.0f) {
     }
 }
 
-glm::ivec2 denormalize(const glm::vec2 &p) {
-    return glm::ivec2(round(p.x * widthChr), round(p.y * heightChr));
+static glm::ivec2 denormalize(const glm::vec2 &p) {
+    return glm::ivec2(glm::round(p.x * state.width), glm::round(p.y * state.height));
 }
 
-glm::vec2 normalize(const glm::ivec2 &pChr) {
-    return glm::vec2((float)pChr.x / widthChr, (float)pChr.y / heightChr);
+static glm::vec2 normalize(const glm::ivec2 &pChr) {
+    return glm::vec2((float)pChr.x / state.width, (float)pChr.y / state.height);
 }
 
 // Pineda edge function
-float edgeFunc(const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c) {
+static float edgeFunc(const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &c) {
     return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-void drawTriangleNaive(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec3 &n0, const glm::vec3 &n1, const glm::vec3 &n2) {
-    float area = edgeFunc(v0,v1,v2);
+static void drawTriangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec3 &n0, const glm::vec3 &n1, const glm::vec3 &n2, const glm::vec3 &lightDir) {
+    float area = edgeFunc(v0, v1, v2);
 
     glm::ivec2 v0Chr = denormalize(v0);
     glm::ivec2 v1Chr = denormalize(v1);
     glm::ivec2 v2Chr = denormalize(v2);
 
-    glm::ivec2 minCoord(std::min(std::min(v0Chr.x, v1Chr.x), v2Chr.x),std::min(std::min(v0Chr.y, v1Chr.y), v2Chr.y));
-    glm::ivec2 maxCoord(std::max(std::max(v0Chr.x, v1Chr.x), v2Chr.x),std::max(std::max(v0Chr.y, v1Chr.y), v2Chr.y));
-    // consoleLog("drawing triangle (%f,%f), (%f,%f), (%f,%f)", v0.x, v0.y, v1.x, v1.y, v2.x, v2.y);
-    // consoleLog("(%d - %d)", startInd, endInd);
-    // consoleLog("END");
+    glm::ivec2 minCoord(glm::min(glm::min(v0Chr.x, v1Chr.x), v2Chr.x), glm::min(glm::min(v0Chr.y, v1Chr.y), v2Chr.y));
+    glm::ivec2 maxCoord(glm::max(glm::max(v0Chr.x, v1Chr.x), v2Chr.x), glm::max(glm::max(v0Chr.y, v1Chr.y), v2Chr.y));
 
-    const float xStep = normalize(glm::ivec2(1,1)).x;
+    const float xStep = normalize(glm::ivec2(1, 1)).x;
 
     for (int y = minCoord.y; y <= maxCoord.y; y++) {
         int x = minCoord.x;
-        glm::ivec2 pChr(x,y);
+        glm::ivec2 pChr(x, y);
         glm::vec2 p = normalize(pChr);
 
         const float w0Step = (v1.y - v0.y) * xStep;
         const float w1Step = (v2.y - v1.y) * xStep;
         const float w2Step = (v0.y - v2.y) * xStep;
 
-        float w0 = edgeFunc(glm::vec2(v0),glm::vec2(v1),p);
-        float w1 = edgeFunc(glm::vec2(v1),glm::vec2(v2),p);
-        float w2 = edgeFunc(glm::vec2(v2),glm::vec2(v0),p);
+        float w0 = edgeFunc(glm::vec2(v0), glm::vec2(v1), p);
+        float w1 = edgeFunc(glm::vec2(v1), glm::vec2(v2), p);
+        float w2 = edgeFunc(glm::vec2(v2), glm::vec2(v0), p);
 
-        int i = y * widthChr + x;
+        int i = y * state.width + x;
 
-        for (; x <= maxCoord.x; x++, w0+=w0Step, w1+=w1Step, w2+=w2Step, i++) {
+        for (; x <= maxCoord.x; x++, w0 += w0Step, w1 += w1Step, w2 += w2Step, i++) {
             bool pointInsideTriangle = w0 >= 0 && w1 >= 0 && w2 >= 0;
 
             if (pointInsideTriangle) {
-                glm::vec3 normal = w0*n0+w1*n1+w2*n2;
-                // Normalize barycentric coordinates
-                normal /= area;
-                glm::vec3 lightDir = glm::normalize(glm::vec3(0,0,1));
-                float depth = w0*v0.z+w1*v1.z+w2*v2.z;
-                depth /= area;
-                depth = remap(depth, nearClip, farClip, 0.0f, 1.0f);
-                // consoleLog("fragment depth %f, zbuffer value %f", depth, zbuffer[i]);
+                glm::vec3 normal = (w0 * n0 + w1 * n1 + w2 * n2) / area;
+                float depth = (w0 * v0.z + w1 * v1.z + w2 * v2.z) / area;
+                depth = remap(depth, state.nearClip, state.farClip, 0.0f, 1.0f);
 
-                if (depth >= zbuffer[i]) {
+                if (depth >= state.zbuffer[i]) {
                     continue;
                 }
 
-                // Cull le backface (stupid)
                 if (normal.z <= 0) {
                     continue;
                 }
@@ -192,14 +189,14 @@ void drawTriangleNaive(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3
                 float brightness = glm::clamp(glm::dot(normal, lightDir), 0.0f, 1.0f);
                 brightness = remap(brightness, 0.0f, 1.0f, 0.1f, 1.0f);
 
-                buffer[i] = getCharFromBrightness(brightness);
-                zbuffer[i] = depth;
+                state.buffer[i] = getCharFromBrightness(brightness);
+                state.zbuffer[i] = depth;
             }
         }
     }
 }
 
-void drawLine(const glm::vec2 &p0, const glm::vec2 &p1, float value = 1.0f) {
+static void drawLine(const glm::vec2 &p0, const glm::vec2 &p1, float value = 1.0f) {
     auto p0Chr = denormalize(p0);
     auto p1Chr = denormalize(p1);
 
@@ -237,85 +234,80 @@ void drawLine(const glm::vec2 &p0, const glm::vec2 &p1, float value = 1.0f) {
     }
 }
 
-void drawPoint(glm::vec2 p, float value = 1.0f) {
+static void drawPoint(glm::vec2 p, float value = 1.0f) {
     auto pChr = denormalize(p);
 
-    int ind = pChr.y * widthChr + pChr.x;
-    buffer[ind] = getCharFromBrightness(value);
+    int ind = pChr.y * state.width + pChr.x;
+    state.buffer[ind] = getCharFromBrightness(value);
 }
 
 extern "C" {
     EMSCRIPTEN_KEEPALIVE void init(int width, int height, int verts, float* pos, float* norm) {
-        widthChr = width;
-        heightChr = height;
-        bufferLength = width*height;
-        buffer = (char*)calloc(bufferLength+1, sizeof(char));
-        zbuffer = (float*)calloc(bufferLength, sizeof(float));
+        state.width = width;
+        state.height = height;
+        state.bufferLength = width * height;
+        state.buffer = (char*)calloc(state.bufferLength + 1, sizeof(char));
+        state.zbuffer = (float*)calloc(state.bufferLength, sizeof(float));
 
-        positions = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
-        memcpy(positions, pos, sizeof(glm::vec3)*verts);
-        normals = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
-        memcpy(normals, norm, sizeof(glm::vec3)*verts);
-        vertexCount = verts;
+        state.vertexCount = verts;
+        state.positions = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
+        memcpy(state.positions, pos, sizeof(glm::vec3) * verts);
+        state.normals = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
+        memcpy(state.normals, norm, sizeof(glm::vec3) * verts);
+
+        state.transformedPts = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
+        state.transformedNrm = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
+
+        state.lightDir = glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f));
     }
 
     EMSCRIPTEN_KEEPALIVE void deinit() {
-        free(buffer);
-        free(zbuffer);
-
-        free(positions);
-        free(normals);
+        free(state.buffer);
+        free(state.zbuffer);
+        free(state.positions);
+        free(state.normals);
+        free(state.transformedPts);
+        free(state.transformedNrm);
     }
 
     EMSCRIPTEN_KEEPALIVE char* update(float time) {
-        if (buffer == nullptr || bufferLength == 0)
+        if (state.buffer == nullptr || state.bufferLength == 0)
             return nullptr;
 
         clearBuffer(0.0f, 1.0f);
 
         glm::mat4 cameraTransformMat(1.0f);
-        cameraTransformMat = glm::translate(cameraTransformMat, glm::vec3(0,0,5.0f));
+        cameraTransformMat = glm::translate(cameraTransformMat, glm::vec3(0, 0, 5.0f));
         glm::mat4 viewMat = glm::inverse(cameraTransformMat);
-        glm::mat4 perspMat = glm::perspective(glm::radians(fov), aspect, nearClip, farClip);
+        glm::mat4 perspMat = glm::perspective(glm::radians(state.fov), state.aspect, state.nearClip, state.farClip);
         perspMat[1][1] *= -1;
 
         glm::mat4 modelMat(1.0f);
-        float angle = time * 0.0005;
-        modelMat = glm::rotate(modelMat, angle*2, glm::vec3(1,0,0));
-        modelMat = glm::rotate(modelMat, angle*2, glm::vec3(0,-1,0));
-        // modelMat = glm::rotate(modelMat, angle*3, glm::vec3(0,0,1));
+        float angle = time * 0.0005f;
+        modelMat = glm::rotate(modelMat, angle * 2, glm::vec3(1, 0, 0));
+        modelMat = glm::rotate(modelMat, angle * 2, glm::vec3(0, -1, 0));
 
         glm::mat4 normalMat = glm::transpose(glm::inverse(modelMat));
 
-        glm::vec3 transformedPts[vertexCount];
-        glm::vec3 transformedNrm[vertexCount];
-        for (int i = 0; i < vertexCount; i++) {
-            glm::vec4 clipPos = perspMat * viewMat * modelMat * glm::vec4(positions[i], 1.0f);
+        for (int i = 0; i < state.vertexCount; i++) {
+            glm::vec4 clipPos = perspMat * viewMat * modelMat * glm::vec4(state.positions[i], 1.0f);
             clipPos /= clipPos.w;
-            // Normalize
             float x = remap(clipPos.x, -1.0f, 1.0f, 0.0f, 1.0f);
             float y = remap(clipPos.y, -1.0f, 1.0f, 0.0f, 1.0f);
+            state.transformedPts[i] = glm::vec3(x, y, clipPos.z);
 
-            transformedPts[i] = glm::vec3(x,y,clipPos.z);
-            
-            glm::vec4 transNorm = normalMat * glm::vec4(normals[i], 0.0f);
-            transformedNrm[i] = glm::vec3(transNorm.x,transNorm.y,transNorm.z);
+            glm::vec4 transNorm = normalMat * glm::vec4(state.normals[i], 0.0f);
+            state.transformedNrm[i] = glm::vec3(transNorm);
         }
 
-        // for (int i = 0; i < 24; i += 2) {
-        //     int p0Ind = edges[i];
-        //     int p1Ind = edges[i+1];
-        //     drawLine(transformedPts[p0Ind], transformedPts[p1Ind], 0.25f);
-        // }
-
-        // for (int i = 0; i < 8; i++) {
-        //     drawPoint(transformedPts[i]);
-        // }
-
-        for (int i = 0; i < vertexCount; i+=3) {
-            drawTriangleNaive(transformedPts[i], transformedPts[i+1], transformedPts[i+2], transformedNrm[i], transformedNrm[i+1], transformedNrm[i+2]);
+        for (int i = 0; i < state.vertexCount; i += 3) {
+            drawTriangle(
+                state.transformedPts[i], state.transformedPts[i+1], state.transformedPts[i+2],
+                state.transformedNrm[i], state.transformedNrm[i+1], state.transformedNrm[i+2],
+                state.lightDir
+            );
         }
-        
-        return buffer;
+
+        return state.buffer;
     }
 }
