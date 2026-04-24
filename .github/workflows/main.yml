@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: 'true'
 
@@ -24,7 +24,7 @@ jobs:
           bash make.sh
       
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
@@ -43,6 +43,6 @@ jobs:
 
       - name: Deploy static site to S3 bucket
         run: |
-          cd web-frontend/build
+          cd web-frontend/dist
           aws s3 sync . s3://nekromantikko.com --delete
           aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
