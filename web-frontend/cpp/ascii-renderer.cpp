@@ -22,7 +22,8 @@ void consoleLog(const char* fmt, ...) {
     consoleLog_internal(s);
 }
 
-const char* asciiCharsByBrightness = ".-:|/]o8#";
+constexpr int BRIGHTNESS_LEVEL_COUNT = 9;
+constexpr char asciiCharsByBrightness[BRIGHTNESS_LEVEL_COUNT] = {'.', '-', ':', '|', '/', ']', 'o', '8', '#'};
 
 char* buffer = nullptr;
 float* zbuffer = nullptr;
@@ -39,9 +40,8 @@ float fov = 35.0f;
 float nearClip = 0.01f;
 float farClip = 100.0f;
 
-int getCharFromBrightness(float value) {
-    const int strLength = 8; // NOTE: Hardcoded string length!
-    int ind = (int)round(value * strLength);
+char getCharFromBrightness(float value) {
+    int ind = (int)glm::round(value * (BRIGHTNESS_LEVEL_COUNT - 1));
     return asciiCharsByBrightness[ind];
 }
 
