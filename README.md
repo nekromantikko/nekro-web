@@ -2,7 +2,7 @@
 Personal portfolio website. Features a 3D ASCII renderer written in C++, compiled to WebAssembly with Emscripten.
 
 ## Prerequisites
-- [Node.js](https://nodejs.org/) (v20+)
+- [Node.js](https://nodejs.org/) (v22+)
 - [CMake](https://cmake.org/) (v3.14+)
 - [Ninja](https://ninja-build.org/)
 - [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) (for building the C++ renderer)
