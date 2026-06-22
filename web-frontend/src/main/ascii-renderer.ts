@@ -1,13 +1,13 @@
 // @ts-ignore - emscripten output, not tracked in git (run make.bat/make.sh to generate)
-import asciiRendererFactory from './wasm/ascii-renderer.js';
-import wasmUrl from './wasm/ascii-renderer.wasm?url';
+import AsciiRendererFactory from '../wasm/ascii-renderer/ascii-renderer.js';
+import wasmUrl from '../wasm/ascii-renderer/ascii-renderer.wasm?url';
 import logoUrl from './obj/logo.obj?url';
 
 import { OBJLoader } from '@loaders.gl/obj';
 import { load } from '@loaders.gl/core';
 
 export async function startRenderer(outputEl: HTMLElement): Promise<() => void> {
-    const wasmModule = await asciiRendererFactory({ locateFile: () => wasmUrl });
+    const wasmModule = await AsciiRendererFactory({ locateFile: () => wasmUrl });
 
     const initFunc = wasmModule.cwrap('init', null, ['number', 'number', 'number', 'array', 'array']);
     const deinitFunc = wasmModule.cwrap('deinit', null);
