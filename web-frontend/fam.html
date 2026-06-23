@@ -2,22 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Synthesizer Piece</title>
+    <title>fam synth</title>
 </head>
-<body>
-    <div id="synth-root"></div>
-    <div>
-        <h3>Pulse 1 Controls</h3>
-        
-        <label>Volume: </label>
-        <input type="range" id="pulse1-vol" min="0" max="15" value="8">
+<body style="background: #111; color: #fff; font-family: sans-serif;">
+    
+    <div id="root"></div>
 
-        <label>Duty Cycle: </label>
-        <button onclick="setDuty(0x00)">12.5%</button>
-        <button onclick="setDuty(0x40)">25%</button>
-        <button onclick="setDuty(0x80)">50%</button>
-        <button onclick="setDuty(0xC0)">25% Negated</button>
-    </div>
-    <script type="module" src="./src/fam/fam-main.ts"></script>
+    <script type="module" src="/src/fam/index.tsx"></script>
 </body>
 </html>

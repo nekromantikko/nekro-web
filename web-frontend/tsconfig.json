@@ -11,7 +11,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "strict": true,
-    "types": ["@types/audioworklet"]
+    "types": ["@types/audioworklet"],
+    "jsx": "react-jsx",
   },
   "include": ["src"]
 }

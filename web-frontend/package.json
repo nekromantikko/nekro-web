@@ -10,11 +10,16 @@
   },
   "dependencies": {
     "@loaders.gl/core": "^4.2.0",
-    "@loaders.gl/obj": "^4.2.0"
+    "@loaders.gl/obj": "^4.2.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
     "@math.gl/types": "^4.1.0",
     "@types/audioworklet": "^0.0.100",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^5.0.0",
     "vite": "^8.0.16"
   }
