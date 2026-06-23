@@ -20,7 +20,7 @@ target_link_options(fam-interface PRIVATE
     -sEXPORT_NAME=FamInterface
     -sENVIRONMENT=worklet
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,HEAPF32
-    -sEXPORTED_FUNCTIONS=['_init','_renderAudio','_malloc']
+    -sEXPORTED_FUNCTIONS=['_init','_writeRegister','_renderAudio','_malloc']
     -sMODULARIZE
     -sSINGLE_FILE
     -sASSERTIONS=2
