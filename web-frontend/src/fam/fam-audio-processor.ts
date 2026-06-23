@@ -4,13 +4,20 @@ class FamAudioProcessor extends AudioWorkletProcessor {
     private wasmModule: any = null;
     private bufferPtr: number = 0;
     private bufferView: Float32Array | null = null;
+    private isReady = false;
 
     constructor() {
         super();
         this.initEngine();
 
         this.port.onmessage = (event) => {
-            // TODO: Register UI events
+            if (!this.isReady) return;
+
+            const { type, address, value } = event.data;
+
+            if (type === 'REG_WRITE') {
+                this.wasmModule._writeRegister(address, value);
+            }
         }
     }
 
@@ -20,10 +27,12 @@ class FamAudioProcessor extends AudioWorkletProcessor {
 
         this.bufferPtr = this.wasmModule._malloc(128 * 4); // Buffer size is always 128
         this.bufferView = new Float32Array(this.wasmModule.HEAPF32.buffer, this.bufferPtr, 128);
+
+        this.isReady = true;
     }
 
     process(inputs: Float32Array[][], outputs: Float32Array[][], param: Record<string, Float32Array>): boolean {
-        if (this.bufferView == null) return false;
+        if (!this.isReady || this.bufferView == null) return false;
 
         const output = outputs[0]; // TODO: User picks output device?
         const channelLeft = output[0];

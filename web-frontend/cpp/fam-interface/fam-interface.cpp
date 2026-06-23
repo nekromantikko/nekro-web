@@ -20,6 +20,12 @@ extern "C" {
         fam_apu_write_register(g_apu, 0x4003, 0x01);
     }
 
+    EMSCRIPTEN_KEEPALIVE void writeRegister(uint16_t address, uint8_t value) {
+        if (g_apu != nullptr) {
+            fam_apu_write_register(g_apu, address, value);
+        }
+    }
+
     EMSCRIPTEN_KEEPALIVE void renderAudio(float* outputBuffer, int numSamples) {
         const double apuPeriod = 1.0 / fam_apu_get_freq(g_apu);
         const double sampleTime = 1.0 / (double)g_sampleRate;

@@ -34,3 +34,28 @@ document.getElementById('start-audio-btn')?.addEventListener('click', async () =
   }
   document.querySelector('p')!.innerText = "Status: 🟢 Running (Playing pulse channel)";
 });
+
+// 1. Hook up the Volume Slider
+document.getElementById('pulse1-vol')?.addEventListener('input', (e) => {
+  const volume = parseInt((e.target as HTMLInputElement).value);
+  
+  // Register 0x4000: 
+  // Base config is 0x30 (Disable length counter halt, constant volume mode active)
+  // We shift our duty cycle into the top 2 bits, and add our 4-bit volume to the bottom
+  const currentDuty = lastSelectedDuty; // Keep track of this in a local variable
+  const regValue = currentDuty | 0x30 | volume;
+
+  synthNode?.port.postMessage({ type: 'REG_WRITE', address: 0x4000, value: regValue });
+});
+
+// 2. Hook up the Duty Cycle Buttons
+let lastSelectedDuty = 0x80; // Default to 50%
+function setDuty(dutyValue: number) {
+  lastSelectedDuty = dutyValue;
+  const currentVolume = parseInt((document.getElementById('pulse1-vol') as HTMLInputElement).value);
+  const regValue = dutyValue | 0x30 | currentVolume;
+
+  synthNode?.port.postMessage({ type: 'REG_WRITE', address: 0x4000, value: regValue });
+}
+// Expose to window scope if needed for the inline onclick attributes
+(window as any).setDuty = setDuty;
