@@ -1,18 +1,35 @@
 import React, { useEffect, useState } from 'react';
+import { PulseStrip } from './components/PulseStrip';
+import { TriangleStrip } from './components/TriangleStrip';
+import { NoiseStrip } from './components/NoiseStrip';
+import { ControlPanel } from './components/ControlPanel';
 
 type AppState = {
     audioContext?: AudioContext;
     workletNode?: AudioWorkletNode;
 };
 
+type ChannelState = {
+    enablePulse1: boolean,
+    enablePulse2: boolean,
+    enableTriangle: boolean,
+    enableNoise: boolean,
+};
+
+const initialChannelState: ChannelState = {
+    enablePulse1: false,
+    enablePulse2: false,
+    enableTriangle: false,
+    enableNoise: false
+};
+
 const App = () => {
     const [state, setState] = useState<AppState>();
     const [isRunning, setIsRunning] = useState<boolean>(false);
-    const [duty, setDuty] = useState<number>(2);
-    const [volume, setVolume] = useState<number>(8);
+    const [channelState, setChannelState] = useState<ChannelState>(initialChannelState);
 
     const writeRegister = (address: number, value: number) => {
-        console.log(`Writing ${value.toString(16)} to adress ${address.toString(16)}`);
+        console.log(`Writing 0x${value.toString(16)} to address $${address.toString(16)}`);
         state?.workletNode?.port.postMessage({
             type: 'REG_WRITE',
             address: address,
@@ -20,30 +37,57 @@ const App = () => {
         });
     }
 
-    const changeDuty = (value: number) => {
-        setDuty(value);
-
-        const regValue = 0x30 | ((value & 3) << 6) | volume & 15;
-        writeRegister(0x4000, regValue);
+    const setPulse1Enabled = (value: boolean) => {
+        const regValue = (value ? 0x1 : 0) |
+                         (channelState.enablePulse2 ? 0x2 : 0) |
+                         (channelState.enableTriangle ? 0x4 : 0) |
+                         (channelState.enableNoise ? 0x8 : 0);
+        writeRegister(0x4015, regValue);
+        setChannelState(state => ({...state, enablePulse1: value}));
     }
 
-    const changeVolume = (value: number) => {
-        setVolume(value);
+    const setPulse2Enabled = (value: boolean) => {
+        const regValue = (channelState.enablePulse1 ? 0x1 : 0) |
+                         (value ? 0x2 : 0) |
+                         (channelState.enableTriangle ? 0x4 : 0) |
+                         (channelState.enableNoise ? 0x8 : 0);
+        writeRegister(0x4015, regValue);
+        setChannelState(state => ({...state, enablePulse2: value}));
+    }
 
-        const regValue = 0x30 | ((duty & 3) << 6) | value & 15;
-        writeRegister(0x4000, regValue);
+    const setTriangleEnabled = (value: boolean) => {
+        const regValue = (channelState.enablePulse1 ? 0x1 : 0) |
+                         (channelState.enablePulse2 ? 0x2 : 0) |
+                         (value ? 0x4 : 0) |
+                         (channelState.enableNoise ? 0x8 : 0);
+        writeRegister(0x4015, regValue);
+        setChannelState(state => ({...state, enableTriangle: value}));
+    }
+
+    const setNoiseEnabled = (value: boolean) => {
+        const regValue = (channelState.enablePulse1 ? 0x1 : 0) |
+                         (channelState.enablePulse2 ? 0x2 : 0) |
+                         (channelState.enableTriangle ? 0x4 : 0) |
+                         (value ? 0x8 : 0);
+        writeRegister(0x4015, regValue);
+        setChannelState(state => ({...state, enableNoise: value}));
     }
 
     const isAudioContextRunning = (ctx: AudioContext): boolean => {
         return ctx.state === 'running' || ctx.state === 'interrupted';
     }
 
-    const toggleRunning = async () => {
+    const toggleRunning = async (value: boolean) => {
         if (!state || !state.audioContext) return;
 
-        if (isAudioContextRunning(state.audioContext)) {
+        const running = isAudioContextRunning(state.audioContext);
+
+        if (value && !running) {
+            await state.audioContext.resume();
+        }
+        else if (!value && running) {
             await state.audioContext.suspend();
-        } else await state.audioContext.resume();
+        }
 
         setIsRunning(isAudioContextRunning(state.audioContext));
     }
@@ -88,25 +132,39 @@ const App = () => {
     }, []);
 
     return (
-        <div>
-            <div style={{ fontFamily: "sans-serif", padding: "20px" }}>
-                <h2>Synthesizer Sandbox Layer</h2>
-                <button id="start-audio-btn" style={{padding: "10px 20px", fontSize: "16px", cursor: "pointer"}} onClick={toggleRunning}>
-                    {isRunning ? "Pause" : "Play"}
-                </button>
+        <div style={{ minWidth: 'fit-content' }}>
+            <ControlPanel 
+                enabled={isRunning}
+                onSetEnabled={toggleRunning}
+            />
+            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'stretch'}}>
+                <PulseStrip 
+                    label='Pulse 1'
+                    isPulse1
+                    enabled={channelState.enablePulse1} 
+                    onSetEnabled={setPulse1Enabled}
+                    write={(offset, value) => writeRegister(0x4000 + offset, value)}
+                />
+                <PulseStrip 
+                    label='Pulse 2'
+                    enabled={channelState.enablePulse2} 
+                    onSetEnabled={setPulse2Enabled}
+                    write={(offset, value) => writeRegister(0x4004 + offset, value)}
+                />
+                <TriangleStrip 
+                    label='Triangle'
+                    enabled={channelState.enableTriangle}
+                    onSetEnabled={setTriangleEnabled}
+                    write={(offset, value) => writeRegister(0x4008 + offset, value)}
+                />
+                <NoiseStrip 
+                    label='Noise'
+                    enabled={channelState.enableNoise}
+                    onSetEnabled={setNoiseEnabled}
+                    write={(offset, value) => writeRegister(0x400C + offset, value)}
+                />
             </div>
-            <div>
-                <h3>Pulse 1 Controls</h3>
-        
-                <label>Volume: </label>
-                <input type="range" id="pulse1-vol" min="0" max="15" value={volume} onChange={(e) => changeVolume(e.target.valueAsNumber)}/>
-
-                <label>Duty Cycle: </label>
-                <button onClick={() => changeDuty(0)}>12.5%</button>
-                <button onClick={() => changeDuty(1)}>25%</button>
-                <button onClick={() => changeDuty(2)}>50%</button>
-                <button onClick={() => changeDuty(3)}>25% Negated</button>
-            </div>
+            
         </div>
     );
 }

@@ -12,12 +12,6 @@ extern "C" {
         g_sampleRate = sampleRate;
 
         fam_apu_init(&g_apu);
-
-        fam_apu_write_register(g_apu, 0x4015, 0x01);
-        fam_apu_write_register(g_apu, 0x4000, 0xB8);
-        fam_apu_write_register(g_apu, 0x4001, 0x00);
-        fam_apu_write_register(g_apu, 0x4002, 0xAA);
-        fam_apu_write_register(g_apu, 0x4003, 0x01);
     }
 
     EMSCRIPTEN_KEEPALIVE void writeRegister(uint16_t address, uint8_t value) {
