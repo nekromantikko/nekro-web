@@ -23,5 +23,6 @@ target_link_options(fam-interface PRIVATE
     -sEXPORTED_FUNCTIONS=['_init','_writeRegister','_renderAudio','_malloc']
     -sMODULARIZE
     -sSINGLE_FILE
-    -sASSERTIONS=2
+    -sALLOW_MEMORY_GROWTH=0
+    -sINITIAL_MEMORY=32mb
 )
