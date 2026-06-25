@@ -1,15 +1,17 @@
 import React, { PropsWithChildren } from 'react';
 import { BaseModule } from './BaseModule';
+import { Channel } from '../apu';
 
-export type ChannelStripProps = {
-    label?: string,
-    enabled?: boolean,
-    onSetEnabled?: (v: boolean) => void
+export type ChannelStripProps<T extends Channel = Channel> = {
+    label: string,
+    state: T,
+    onChange: (payload: Partial<T>) => void,
+    disabled?: boolean,
 };
 
-export const ChannelStrip = (props: PropsWithChildren<ChannelStripProps>) => {
+export const ChannelStrip = <T extends Channel = Channel>(props: PropsWithChildren<ChannelStripProps<T>>) => {
     const setEnabled = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
-        if (props.onSetEnabled) props.onSetEnabled(e.target.checked)
+        props.onChange({ enabled: e.target.checked } as Partial<T>);
     }
 
     return (
@@ -23,7 +25,7 @@ export const ChannelStrip = (props: PropsWithChildren<ChannelStripProps>) => {
                 width: '100%'
             }}>
                 <div>
-                    <input type='checkbox' checked={props.enabled} onChange={setEnabled} />
+                    <input type='checkbox' checked={props.state.enabled} onChange={setEnabled} disabled={props.disabled} />
                     <label>{props.label}</label>
                 </div>
                 <div style={{ 
