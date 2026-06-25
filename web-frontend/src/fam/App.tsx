@@ -4,6 +4,8 @@ import { TriangleStrip } from './components/TriangleStrip';
 import { NoiseStrip } from './components/NoiseStrip';
 import { ControlPanel } from './components/ControlPanel';
 
+import processorUrl from './fam-audio-processor.ts?worker&url';
+
 type AppState = {
     audioContext?: AudioContext;
     workletNode?: AudioWorkletNode;
@@ -99,7 +101,6 @@ const App = () => {
             console.log("Initializing state...");
             audioContext = new AudioContext();
 
-            const processorUrl = new URL('./fam-audio-processor.ts', import.meta.url).href;
             await audioContext.audioWorklet.addModule(processorUrl);
 
             const workletNode = new AudioWorkletNode(audioContext, 'fam-audio-processor', {
