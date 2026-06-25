@@ -1,5 +1,13 @@
 import FamInterfaceFactory from '../wasm/fam-interface/fam-interface.js';
 
+// Polyfill global scope for Emscripten's auto-location sniffing
+const globalScope = typeof globalThis !== 'undefined' ? globalThis : {};
+if (typeof (globalScope as any).self === 'undefined') {
+  (globalScope as any).self = {
+    location: { href: '' }
+  };
+}
+
 class FamAudioProcessor extends AudioWorkletProcessor {
     private wasmModule: any = null;
     private bufferPtr: number = 0;
