@@ -19,5 +19,10 @@ target_link_options(ascii-renderer PRIVATE
     -sEXPORT_ES6=1
     -sEXPORT_NAME=AsciiRenderer
     -sENVIRONMENT=web
-    -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
+    -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,HEAPU8
+    -sEXPORTED_FUNCTIONS=['_init','_deinit','_update','_malloc']
+    -sMODULARIZE
+    -sSINGLE_FILE
+    -sALLOW_MEMORY_GROWTH=0
+    -sINITIAL_MEMORY=32mb
 )

@@ -1,33 +1,37 @@
 // @ts-ignore - emscripten output, not tracked in git (run make.bat/make.sh to generate)
 import AsciiRendererFactory from '../wasm/ascii-renderer/ascii-renderer.js';
-import wasmUrl from '../wasm/ascii-renderer/ascii-renderer.wasm?url';
 import logoUrl from './obj/logo.obj?url';
 
 import { OBJLoader } from '@loaders.gl/obj';
 import { load } from '@loaders.gl/core';
 
 export async function startRenderer(outputEl: HTMLElement): Promise<() => void> {
-    const wasmModule = await AsciiRendererFactory({ locateFile: () => wasmUrl });
-
-    const initFunc = wasmModule.cwrap('init', null, ['number', 'number', 'number', 'array', 'array']);
-    const deinitFunc = wasmModule.cwrap('deinit', null);
-    const updateFunc = wasmModule.cwrap('update', 'string', ['number']);
+    const wasmModule = await AsciiRendererFactory();
 
     const data = await load(logoUrl, OBJLoader);
 
     const vertexCount: number = data.header?.vertexCount ?? 0;
-    const normals = data.attributes.NORMAL.value as Float32Array;
     const positions = data.attributes.POSITION.value as Float32Array;
+    const normals = data.attributes.NORMAL.value as Float32Array;
 
-    const normalsU8 = new Uint8Array(normals.buffer);
-    const positionsU8 = new Uint8Array(positions.buffer);
+    const posPtr = wasmModule._malloc(positions.byteLength);
+    const nrmPtr = wasmModule._malloc(normals.byteLength);
 
-    initFunc(45, 25, vertexCount, positionsU8, normalsU8);
+    new Float32Array(wasmModule.HEAPU8.buffer, posPtr, positions.length).set(positions);
+    new Float32Array(wasmModule.HEAPU8.buffer, nrmPtr, normals.length).set(normals);
+
+    const width = 45;
+    const height = 25;
+    const bufferSize = width * height;
+    const bufferPtr = wasmModule._init(width, height, vertexCount, posPtr, nrmPtr);
+    const frameBufferView = new Uint8Array(wasmModule.HEAPU8.buffer, bufferPtr, bufferSize);
+    const decoder = new TextDecoder('utf-8');
 
     let rafId: number;
 
     const animate = (time: number) => {
-        outputEl.textContent = updateFunc(time);
+        wasmModule._update(time);
+        outputEl.textContent = decoder.decode(frameBufferView);
         rafId = requestAnimationFrame(animate);
     };
 
@@ -35,6 +39,6 @@ export async function startRenderer(outputEl: HTMLElement): Promise<() => void> 
 
     return () => {
         cancelAnimationFrame(rafId);
-        deinitFunc();
+        wasmModule._deinit();
     };
 }

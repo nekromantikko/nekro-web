@@ -7,19 +7,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-EM_JS(void, consoleLog_internal, (const char* msg), {
-    console.log(UTF8ToString(msg));
-});
-
-static void consoleLog(const char* fmt, ...) {
-    char s[1025];
-    va_list args;
-    va_start(args, fmt);
-    vsprintf(s, fmt, args);
-    va_end(args);
-    consoleLog_internal(s);
-}
-
 constexpr int BRIGHTNESS_LEVEL_COUNT = 9;
 constexpr char asciiCharsByBrightness[BRIGHTNESS_LEVEL_COUNT] = {'.', '-', ':', '|', '/', ']', 'o', '8', '#'};
 
@@ -242,7 +229,7 @@ static void drawPoint(glm::vec2 p, float value = 1.0f) {
 }
 
 extern "C" {
-    EMSCRIPTEN_KEEPALIVE void init(int width, int height, int verts, float* pos, float* norm) {
+    EMSCRIPTEN_KEEPALIVE char* init(int width, int height, int verts, glm::vec3* pos, glm::vec3* norm) {
         state.width = width;
         state.height = height;
         state.bufferLength = width * height;
@@ -250,29 +237,27 @@ extern "C" {
         state.zbuffer = (float*)calloc(state.bufferLength, sizeof(float));
 
         state.vertexCount = verts;
-        state.positions = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
-        memcpy(state.positions, pos, sizeof(glm::vec3) * verts);
-        state.normals = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
-        memcpy(state.normals, norm, sizeof(glm::vec3) * verts);
+        state.positions = pos;
+        state.normals = norm;
 
         state.transformedPts = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
         state.transformedNrm = (glm::vec3*)calloc(verts, sizeof(glm::vec3));
 
         state.lightDir = glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f));
+
+        return state.buffer;
     }
 
     EMSCRIPTEN_KEEPALIVE void deinit() {
         free(state.buffer);
         free(state.zbuffer);
-        free(state.positions);
-        free(state.normals);
         free(state.transformedPts);
         free(state.transformedNrm);
     }
 
-    EMSCRIPTEN_KEEPALIVE char* update(float time) {
+    EMSCRIPTEN_KEEPALIVE void update(float time) {
         if (state.buffer == nullptr || state.bufferLength == 0)
-            return nullptr;
+            return;
 
         clearBuffer(0.0f, 1.0f);
 
@@ -307,7 +292,5 @@ extern "C" {
                 state.lightDir
             );
         }
-
-        return state.buffer;
     }
 }
