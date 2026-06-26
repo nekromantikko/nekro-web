@@ -1,4 +1,4 @@
-// @ts-ignore - emscripten output, not tracked in git (run make.bat/make.sh to generate)
+// @ts-expect-error - emscripten output, not tracked in git (run make.bat/make.sh to generate)
 import AsciiRendererFactory from '../wasm/ascii-renderer/ascii-renderer.js';
 import logoUrl from './obj/logo.obj?url';
 

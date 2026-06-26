@@ -14,7 +14,7 @@ type KeyboardKeyProps = {
 export const KeyboardKey = memo((props: KeyboardKeyProps) => {
     const color = (props.active && !props.disabled) ? 'yellow' : props.isBlack ? '#222' : (props.isExtra ? '#444' : '#ccc');
 
-    const handlePointerDown = (e: React.PointerEvent) => {
+    const handlePointerDown = () => {
         if (props.disabled) return;
         props.onPlayNote(props.midiNote);
     }
@@ -28,7 +28,7 @@ export const KeyboardKey = memo((props: KeyboardKeyProps) => {
         }
     }
 
-    const handlePointerUpOrLeave = (e: React.PointerEvent) => {
+    const handlePointerUpOrLeave = () => {
         props.onStopNote(props.midiNote);
     }
 
@@ -63,3 +63,5 @@ export const KeyboardKey = memo((props: KeyboardKeyProps) => {
         </div>
     )
 });
+
+KeyboardKey.displayName = 'KeyboardKey';

@@ -9,95 +9,97 @@ type NoiseStripProps = ChannelStripProps<NoiseChannel>;
 
 export const NoiseStrip = memo((props: NoiseStripProps) => {
 
+    const { label, onChange, state, disabled } = props;
+
     const setUseEnvelope = useCallback((value: boolean) => {
-        props.onChange({ constantVolume: !value });
-    }, [props.onChange]);
+        onChange({ constantVolume: !value });
+    }, [onChange]);
 
     const setLoop = useCallback((value: boolean) => {
-        props.onChange({ loop: value });
-    }, [props.onChange]);
+        onChange({ loop: value });
+    }, [onChange]);
 
     const setVolume = useCallback((value: number) => {
-        props.onChange({ volume: value });
-    }, [props.onChange]);
+        onChange({ volume: value });
+    }, [onChange]);
 
     const setMode = useCallback((value: boolean) => {
-        props.onChange({ mode: value })
-    }, [props.onChange]);
+        onChange({ mode: value })
+    }, [onChange]);
 
     const setPeriod = useCallback((value: number) => {
-        props.onChange({ period: value })
-    }, [props.onChange]);
+        onChange({ period: value })
+    }, [onChange]);
 
     const setLengthCounterLoad = useCallback((val: number) => {
-        props.onChange({ lengthCounterLoad: val });
-    }, [props.onChange]);
+        onChange({ lengthCounterLoad: val });
+    }, [onChange]);
 
     const handleTriggerNote = useCallback(() => {
-        props.onChange({ lengthCounterLoad: props.state.lengthCounterLoad });
-    }, [props.onChange, props.state.lengthCounterLoad]);
+        onChange({ lengthCounterLoad: state.lengthCounterLoad });
+    }, [onChange, state.lengthCounterLoad]);
 
     return (
         <ChannelStrip<NoiseChannel>
-            state={props.state}
-            label={props.label}
-            onChange={props.onChange}
-            disabled={props.disabled}
+            state={state}
+            label={label}
+            onChange={onChange}
+            disabled={disabled}
         >
             <ChannelStripGroup label={'$400C'}>
                 <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center' }}>
                     <Switch
                         label='Use envelope' 
-                        checked={!props.state.constantVolume}
+                        checked={!state.constantVolume}
                         onChange={setUseEnvelope}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                     <Switch 
                         label='Loop' 
-                        checked={props.state.loop}
+                        checked={state.loop}
                         onChange={setLoop}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                 </div>
                 <Slider
-                    label={props.state.constantVolume ? 'Volume' : 'Envelope period'}
-                    value={props.state.volume}
+                    label={state.constantVolume ? 'Volume' : 'Envelope period'}
+                    value={state.volume}
                     min={0}
                     max={0xF}
                     onChange={setVolume}
-                    disabled={props.disabled || !props.state.enabled}
+                    disabled={disabled || !state.enabled}
                 />
             </ChannelStripGroup>
             <ChannelStripGroup label={'$400E'}>
                 <Switch 
                     label='Mode' 
-                    checked={props.state.mode}
+                    checked={state.mode}
                     onChange={setMode}
-                    disabled={props.disabled || !props.state.enabled}
+                    disabled={disabled || !state.enabled}
                 />
                 <Slider
                     label='Period'
-                    value={props.state.period}
+                    value={state.period}
                     min={0}
                     max={0xF}
                     onChange={setPeriod}
-                    disabled={props.disabled || !props.state.enabled}
+                    disabled={disabled || !state.enabled}
                 />
             </ChannelStripGroup>
             <ChannelStripGroup label={'$400F'}>
                 <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center'  }}>
                     <Slider
                         label='Length counter load'
-                        value={props.state.lengthCounterLoad}
+                        value={state.lengthCounterLoad}
                         min={0}
                         max={0x1F}
                         onChange={setLengthCounterLoad}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                     <div>
                         <button 
                             onClick={handleTriggerNote}
-                            disabled={props.disabled || !props.state.enabled}
+                            disabled={disabled || !state.enabled}
                         >
                             Trigger note
                         </button>
@@ -107,3 +109,5 @@ export const NoiseStrip = memo((props: NoiseStripProps) => {
         </ChannelStrip>
     )
 });
+
+NoiseStrip.displayName = 'NoiseStrip';

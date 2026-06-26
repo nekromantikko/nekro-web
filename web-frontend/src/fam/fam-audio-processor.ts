@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// @ts-expect-error - emscripten output, not tracked in git (run make.bat/make.sh to generate)
 import FamInterfaceFactory from '../wasm/fam-interface/fam-interface.js';
 
 // Polyfill global scope for Emscripten's auto-location sniffing

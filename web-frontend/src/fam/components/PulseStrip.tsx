@@ -11,149 +11,151 @@ type PulseStripProps = ChannelStripProps<PulseChannel> & {
 
 export const PulseStrip = memo((props: PulseStripProps) => {
 
+    const { label, onChange, state, disabled, isPulse1 } = props;
+
     const setUseEnvelope = useCallback((value: boolean) => {
-        props.onChange({ constantVolume: !value });
-    }, [props.onChange]);
+        onChange({ constantVolume: !value });
+    }, [onChange]);
 
     const setLoop = useCallback((value: boolean) => {
-        props.onChange({ loop: value });
-    }, [props.onChange]);
+        onChange({ loop: value });
+    }, [onChange]);
 
     const setVolume = useCallback((value: number) => {
-        props.onChange({ volume: value });
-    }, [props.onChange]);
+        onChange({ volume: value });
+    }, [onChange]);
 
     const setDutyCyle = useCallback((value: number) => {
-        props.onChange({ dutyCycle: value });
-    }, [props.onChange]);
+        onChange({ dutyCycle: value });
+    }, [onChange]);
 
     const setSweepEnabled = useCallback((val: boolean) => {
-        props.onChange({ sweepEnabled: val });
-    }, [props.onChange]);
+        onChange({ sweepEnabled: val });
+    }, [onChange]);
 
     const setSweepNegate = useCallback((val: boolean) => {
-        props.onChange({ sweepNegate: val });
-    }, [props.onChange]);
+        onChange({ sweepNegate: val });
+    }, [onChange]);
 
     const setSweepShift = useCallback((val: number) => {
-        props.onChange({ sweepShift: val });
-    }, [props.onChange]);
+        onChange({ sweepShift: val });
+    }, [onChange]);
 
     const setSweepPeriod = useCallback((val: number) => {
-        props.onChange({ sweepPeriod: val });
-    }, [props.onChange]);
+        onChange({ sweepPeriod: val });
+    }, [onChange]);
 
     const setTimerPeriod = useCallback((val: number) => {
-        props.onChange({ timerPeriod: val });
-    }, [props.onChange]);
+        onChange({ timerPeriod: val });
+    }, [onChange]);
 
     const setLengthCounterLoad = useCallback((val: number) => {
-        props.onChange({ lengthCounterLoad: val });
-    }, [props.onChange]);
+        onChange({ lengthCounterLoad: val });
+    }, [onChange]);
 
     const handleTriggerNote = useCallback(() => {
-        props.onChange({ lengthCounterLoad: props.state.lengthCounterLoad });
-    }, [props.onChange, props.state.lengthCounterLoad]);
+        onChange({ lengthCounterLoad: state.lengthCounterLoad });
+    }, [onChange, state.lengthCounterLoad]);
 
     return (
         <ChannelStrip<PulseChannel> 
-            state={props.state}
-            label={props.label} 
-            onChange={props.onChange}
-            disabled={props.disabled}
+            state={state}
+            label={label} 
+            onChange={onChange}
+            disabled={disabled}
         >
-            <ChannelStripGroup label={props.isPulse1 ? '$4000' : '$4004'}>
+            <ChannelStripGroup label={isPulse1 ? '$4000' : '$4004'}>
                 <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center' }}>
                     <Switch
                         label='Use envelope' 
-                        checked={!props.state.constantVolume}
+                        checked={!state.constantVolume}
                         onChange={setUseEnvelope}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                     <Switch 
                         label='Loop' 
-                        checked={props.state.loop}
+                        checked={state.loop}
                         onChange={setLoop}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                 </div>
                 <div style={{ display: 'flex' }}>
                     <Slider
-                        label={props.state.constantVolume ? 'Volume' : 'Envelope period'}
-                        value={props.state.volume}
+                        label={state.constantVolume ? 'Volume' : 'Envelope period'}
+                        value={state.volume}
                         min={0}
                         max={0xF}
                         onChange={setVolume}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                     <Slider
                         label='Duty cycle'
-                        value={props.state.dutyCycle}
+                        value={state.dutyCycle}
                         min={0}
                         max={3}
                         onChange={setDutyCyle}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                 </div>
             </ChannelStripGroup>
-            <ChannelStripGroup label={props.isPulse1 ? '$4001' : '$4005'}>
+            <ChannelStripGroup label={isPulse1 ? '$4001' : '$4005'}>
                 <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center' }}>
                     <Switch
                         label='Enable sweep' 
-                        checked={props.state.sweepEnabled}
+                        checked={state.sweepEnabled}
                         onChange={setSweepEnabled}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                     <Switch 
                         label='Negate sweep' 
-                        checked={props.state.sweepNegate}
+                        checked={state.sweepNegate}
                         onChange={setSweepNegate}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                 </div>
                 <div style={{ display: 'flex' }}>
                     <Slider
                         label='Sweep shift'
-                        value={props.state.sweepShift}
+                        value={state.sweepShift}
                         min={0}
                         max={7}
                         onChange={setSweepShift}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                     <Slider
                         label='Sweep period'
-                        value={props.state.sweepPeriod}
+                        value={state.sweepPeriod}
                         min={0}
                         max={7}
                         onChange={setSweepPeriod}
-                        disabled={props.disabled || !props.state.enabled}
+                        disabled={disabled || !state.enabled}
                     />
                 </div>
             </ChannelStripGroup>
-            <ChannelStripGroup label={props.isPulse1 ? '$4002 / $4003' : '$4006 / $4007'}>
+            <ChannelStripGroup label={isPulse1 ? '$4002 / $4003' : '$4006 / $4007'}>
                 <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center'  }}>
                     <div style={{ display: 'flex' }}>
                         <Slider
                             label='Period'
-                            value={props.state.timerPeriod}
+                            value={state.timerPeriod}
                             min={0}
                             max={0x7FF}
                             onChange={setTimerPeriod}
-                            disabled={props.disabled || !props.state.enabled}
+                            disabled={disabled || !state.enabled}
                         />
                         <Slider
                             label='Length counter load'
-                            value={props.state.lengthCounterLoad}
+                            value={state.lengthCounterLoad}
                             min={0}
                             max={0x1F}
                             onChange={setLengthCounterLoad}
-                            disabled={props.disabled || !props.state.enabled}
+                            disabled={disabled || !state.enabled}
                         />
                     </div>
                     <div>
                         <button 
                             onClick={handleTriggerNote}
-                            disabled={props.disabled || !props.state.enabled}
+                            disabled={disabled || !state.enabled}
                         >
                             Trigger note
                         </button>
@@ -163,3 +165,5 @@ export const PulseStrip = memo((props: PulseStripProps) => {
         </ChannelStrip>
     )
 });
+
+PulseStrip.displayName = 'PulseStrip';

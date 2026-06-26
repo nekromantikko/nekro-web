@@ -1,5 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 type BaseModuleProps = {
 
 }
