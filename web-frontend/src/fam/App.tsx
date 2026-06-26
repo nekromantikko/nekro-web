@@ -413,6 +413,9 @@ const App = () => {
                 </div>
                 <Keyboard onPlayNote={handlePlayNote} minNote={getMinNote()} maxNote={getMaxNote()} />
             </div>
+            <p style={{ textAlign: 'end', color: '#999', margin: '8px' }}>
+                Powered by <a style={{ color: 'bisque' }} href='https://github.com/nekromantikko/fam'>fam</a>
+            </p>
         </div>
     );
 }
