@@ -397,21 +397,13 @@ const App = () => {
                 />
             </div>
             <div style={{ marginTop: '24px', }} >
-                <div style={{ margin: '8px', display: 'flex', gap: '24px' }} >
-                    <label>
-                        Keyboard affects channel
-                    </label>
-                    <select
-                        value={kbChannel}
-                        onChange={(e) => setKbChannel(e.target.value as ChannelId)}
-                    >
-                        <option value={'pulse1'}>Pulse 1</option>
-                        <option value={'pulse2'}>Pulse 2</option>
-                        <option value={'triangle'}>Triangle</option>
-                        <option value={'noise'}>Noise</option>
-                    </select>
-                </div>
-                <Keyboard onPlayNote={handlePlayNote} minNote={getMinNote()} maxNote={getMaxNote()} />
+                <Keyboard 
+                    channel={kbChannel} 
+                    onSetChannel={setKbChannel}
+                    onPlayNote={handlePlayNote}
+                    minNote={getMinNote()} 
+                    maxNote={getMaxNote()}
+                />
             </div>
             <p style={{ textAlign: 'end', color: '#999', margin: '8px' }}>
                 Powered by <a style={{ color: 'bisque' }} href='https://github.com/nekromantikko/fam'>fam</a>
