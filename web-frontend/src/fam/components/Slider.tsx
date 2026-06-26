@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 type SliderProps = {
     label?: string,
@@ -9,7 +9,7 @@ type SliderProps = {
     onChange?: (v: number) => void
 };
 
-export const Slider = (props: SliderProps) => {
+export const Slider = memo((props: SliderProps) => {
 
     const setValue = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
         if (props.onChange) props.onChange(e.target.valueAsNumber);
@@ -36,4 +36,4 @@ export const Slider = (props: SliderProps) => {
             />
         </div>
     );
-} 
+});

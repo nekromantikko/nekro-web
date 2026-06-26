@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 type SwitchProps = {
     label?: string,
@@ -7,7 +7,7 @@ type SwitchProps = {
     onChange?: (c: boolean) => void
 };
 
-export const Switch = (props: SwitchProps) => {
+export const Switch = memo((props: SwitchProps) => {
     const setChecked = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
         if (props.onChange) props.onChange(e.target.checked);
     }
@@ -30,4 +30,4 @@ export const Switch = (props: SwitchProps) => {
             />
         </div>
     );
-}
+});

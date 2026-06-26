@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { PulseStrip } from './components/PulseStrip';
 import { TriangleStrip } from './components/TriangleStrip';
 import { NoiseStrip } from './components/NoiseStrip';
@@ -6,12 +6,14 @@ import { ControlPanel } from './components/ControlPanel';
 
 import processorUrl from './fam-audio-processor.ts?worker&url';
 import { Keyboard } from './components/keyboard/Keyboard';
-import { ApuState, ChannelId, NoiseChannel, PulseChannel, TriangleChannel } from './apu';
+import { ApuState, Channel, ChannelId, NoiseChannel, PulseChannel, TriangleChannel } from './apu';
 
 type AppState = {
     audioContext?: AudioContext;
     workletNode?: AudioWorkletNode;
 };
+
+type UpdateChannelAction<T extends Channel> = Partial<T> | ((prev: T) => Partial<T>);
 
 const initialApuState: ApuState = {
     pulse1: {
@@ -69,106 +71,123 @@ const initialApuState: ApuState = {
     }
 }
 
+const nesCpuFreqNtsc = 1789773;
+
+const getStatusRegisterValue = (apu: ApuState): number => {
+    return (apu.pulse1.enabled ? 0x1 : 0) |
+            (apu.pulse2.enabled ? 0x2 : 0) |
+            (apu.triangle.enabled ? 0x4 : 0) |
+            (apu.noise.enabled ? 0x8 : 0);
+}
+
+const getPulseRegisterValue = (chan: PulseChannel, offset: number): number => {
+    switch(offset) {
+        case 0: {
+            return (chan.volume & 0xF) | 
+                    (chan.constantVolume ? 0x10 : 0) |
+                    (chan.loop ? 0x20 : 0) |
+                    ((chan.dutyCycle & 3) << 6);
+        }
+        case 1: {
+            return (chan.sweepShift & 7) |
+                    (chan.sweepNegate ? 8 : 0) |
+                    ((chan.sweepPeriod & 7) << 4) |
+                    (chan.sweepEnabled ? 0x80 : 0);
+        }
+        case 2: {
+            return chan.timerPeriod & 0xFF;
+        }
+        case 3: {
+            return ((chan.timerPeriod >> 8) & 7) |
+                    ((chan.lengthCounterLoad & 0x1F) << 3);
+        }
+        default: {
+            return NaN;
+        }
+    }
+}
+
+const getTriangleRegisterValue = (chan: TriangleChannel, offset: number): number => {
+    switch(offset) {
+        case 0: {
+            return (chan.linearCounterLoad & 0x7F) |
+                    (chan.loop ? 0x80 : 0);
+        }
+        case 1: {
+            return 0;
+        }
+        case 2: {
+            return chan.timerPeriod & 0xFF;
+        }
+        case 3: {
+            return ((chan.timerPeriod >> 8) & 7) |
+                    ((chan.lengthCounterLoad & 0x1F) << 3);
+        }
+        default: {
+            return NaN;
+        }
+    }
+}
+
+const getNoiseRegisterValue = (chan: NoiseChannel, offset: number): number => {
+    switch(offset) {
+        case 0: {
+            return (chan.volume & 0xF) | 
+                    (chan.constantVolume ? 0x10 : 0) |
+                    (chan.loop ? 0x20 : 0);
+        }
+        case 1: {
+            return 0;
+        }
+        case 2: {
+            return (chan.period & 0xF) |
+                    (chan.mode ? 0x80 : 0);
+        }
+        case 3: {
+            return ((chan.lengthCounterLoad & 0x1F) << 3);
+        }
+        default: {
+            return NaN;
+        }
+    }
+}
+
+const isAudioContextRunning = (ctx: AudioContext): boolean => {
+    return ctx.state === 'running' || ctx.state === 'interrupted';
+}
+
+const midiNoteToNesPeriod = (midiNote: number, cpuFreq: number) => {
+    // MIDI 69 = A4 (440Hz)
+    const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
+
+    const period = Math.round(cpuFreq / (16 * freq)) - 1;
+
+    return Math.max(0, Math.min(0x7FF, period));
+}
+
 const App = () => {
     const [state, setState] = useState<AppState>();
     const [isRunning, setIsRunning] = useState<boolean>(false);
     const [apuState, setApuState] = useState<ApuState>(initialApuState);
     const [kbChannel, setKbChannel] = useState<ChannelId>('pulse1');
 
-    const nesCpuFreqNtsc = 1789773;
-
-    const writeRegister = (address: number, value: number) => {
+    const writeRegister = useCallback((address: number, value: number) => {
         // console.log(`Writing 0x${value.toString(16)} to address $${address.toString(16)}`);
         state?.workletNode?.port.postMessage({
             type: 'REG_WRITE',
             address: address,
             value: value
         });
-    }
+    }, [state]);
 
-    const getStatusRegisterValue = (apu: ApuState): number => {
-        return (apu.pulse1.enabled ? 0x1 : 0) |
-               (apu.pulse2.enabled ? 0x2 : 0) |
-               (apu.triangle.enabled ? 0x4 : 0) |
-               (apu.noise.enabled ? 0x8 : 0);
-    }
-
-    const getPulseRegisterValue = (chan: PulseChannel, offset: number): number => {
-        switch(offset) {
-            case 0: {
-                return (chan.volume & 0xF) | 
-                       (chan.constantVolume ? 0x10 : 0) |
-                       (chan.loop ? 0x20 : 0) |
-                       ((chan.dutyCycle & 3) << 6);
-            }
-            case 1: {
-                return (chan.sweepShift & 7) |
-                       (chan.sweepNegate ? 8 : 0) |
-                       ((chan.sweepPeriod & 7) << 4) |
-                       (chan.sweepEnabled ? 0x80 : 0);
-            }
-            case 2: {
-                return chan.timerPeriod & 0xFF;
-            }
-            case 3: {
-                return ((chan.timerPeriod >> 8) & 7) |
-                       ((chan.lengthCounterLoad & 0x1F) << 3);
-            }
-            default: {
-                return NaN;
-            }
-        }
-    }
-
-    const getTriangleRegisterValue = (chan: TriangleChannel, offset: number): number => {
-        switch(offset) {
-            case 0: {
-                return (chan.linearCounterLoad & 0x7F) |
-                       (chan.loop ? 0x80 : 0);
-            }
-            case 1: {
-                return 0;
-            }
-            case 2: {
-                return chan.timerPeriod & 0xFF;
-            }
-            case 3: {
-                return ((chan.timerPeriod >> 8) & 7) |
-                       ((chan.lengthCounterLoad & 0x1F) << 3);
-            }
-            default: {
-                return NaN;
-            }
-        }
-    }
-
-    const getNoiseRegisterValue = (chan: NoiseChannel, offset: number): number => {
-        switch(offset) {
-            case 0: {
-                return (chan.volume & 0xF) | 
-                       (chan.constantVolume ? 0x10 : 0) |
-                       (chan.loop ? 0x20 : 0);
-            }
-            case 1: {
-                return 0;
-            }
-            case 2: {
-                return (chan.period & 0xF) |
-                       (chan.mode ? 0x80 : 0);
-            }
-            case 3: {
-                return ((chan.lengthCounterLoad & 0x1F) << 3);
-            }
-            default: {
-                return NaN;
-            }
-        }
-    }
-
-    const updatePulse = (channel: 'pulse1' | 'pulse2', payload: Partial<PulseChannel>) => {
+    const updatePulse = useCallback((channel: 'pulse1' | 'pulse2', action: UpdateChannelAction<PulseChannel>) => {
         const baseAddress = channel === 'pulse1' ? 0x4000 : 0x4004;
 
         setApuState(state => {
+            const payload = typeof action === 'function'
+                ? action(state[channel])
+                : action;
+
             const newState = {
                 ...state,
                 [channel]: {
@@ -198,10 +217,17 @@ const App = () => {
 
             return newState;
         });
-    }
+    }, [writeRegister]);
 
-    const updateTriangle = (payload: Partial<TriangleChannel>) => {
+    const updatePulse1 = useCallback((action: UpdateChannelAction<PulseChannel>) => updatePulse('pulse1', action), [updatePulse]);
+    const updatePulse2 = useCallback((action: UpdateChannelAction<PulseChannel>) => updatePulse('pulse2', action), [updatePulse]);
+
+    const updateTriangle = useCallback((action: UpdateChannelAction<TriangleChannel>) => {
         setApuState(state => {
+            const payload = typeof action === 'function'
+                ? action(state.triangle)
+                : action;
+
             const newState = {
                 ...state,
                 triangle: {
@@ -227,10 +253,14 @@ const App = () => {
 
             return newState;
         });
-    }
+    }, [writeRegister]);
 
-    const updateNoise = (payload: Partial<NoiseChannel>) => {
+    const updateNoise = useCallback((action: UpdateChannelAction<NoiseChannel>) => {
         setApuState(state => {
+            const payload = typeof action === 'function'
+                ? action(state.noise)
+                : action;
+
             const newState = {
                 ...state,
                 noise: {
@@ -257,13 +287,9 @@ const App = () => {
 
             return newState;
         });
-    }
+    }, [writeRegister]);
 
-    const isAudioContextRunning = (ctx: AudioContext): boolean => {
-        return ctx.state === 'running' || ctx.state === 'interrupted';
-    }
-
-    const toggleRunning = async (value: boolean) => {
+    const toggleRunning = useCallback(async (value: boolean) => {
         if (!state || !state.audioContext) return;
 
         const running = isAudioContextRunning(state.audioContext);
@@ -276,16 +302,7 @@ const App = () => {
         }
 
         setIsRunning(isAudioContextRunning(state.audioContext));
-    }
-
-    const midiNoteToNesPeriod = (midiNote: number, cpuFreq: number) => {
-        // MIDI 69 = A4 (440Hz)
-        const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
-
-        const period = Math.round(cpuFreq / (16 * freq)) - 1;
-
-        return Math.max(0, Math.min(0x7FF, period));
-    }
+    }, [state]);
 
     const getMinNote = () => {
         if (kbChannel === 'noise') {
@@ -311,21 +328,19 @@ const App = () => {
         return 108;
     }
 
-    const handlePlayNote = (midiNote: number) => {
-        if (!apuState[kbChannel].enabled) return;
-
+    const handlePlayNote = useCallback((channel: ChannelId, midiNote: number) => {
         const period = midiNoteToNesPeriod(midiNote, nesCpuFreqNtsc);
 
-        if (kbChannel === 'pulse1' || kbChannel === 'pulse2') {
-            updatePulse(kbChannel, { timerPeriod: period });
+        if (channel === 'pulse1' || channel === 'pulse2') {
+            updatePulse(channel, prev => prev.enabled ? { timerPeriod: period } : {});
         }
-        if (kbChannel === 'triangle') {
-            updateTriangle({ timerPeriod: period });
+        if (channel === 'triangle') {
+            updateTriangle(prev => prev.enabled ? { timerPeriod: period } : {});
         }
-        if (kbChannel === 'noise') {
-            updateNoise({ period: (midiNote - 24), lengthCounterLoad: apuState.noise.lengthCounterLoad });
+        if (channel === 'noise') {
+            updateNoise(prev => prev.enabled ? { period: (midiNote - 24), lengthCounterLoad: prev.lengthCounterLoad } : {});
         }
-    }
+    }, [updatePulse, updateTriangle, updateNoise]);
 
     useEffect(() => {
         let audioContext: AudioContext | null = null;
@@ -349,7 +364,7 @@ const App = () => {
             setIsRunning(isAudioContextRunning(audioContext));
         }
 
-        const initPromise = initializeState();
+        const initPromise = initializeState(); 
 
         initPromise.catch(e => 
             console.error("State initialization failed with error", e)
@@ -359,7 +374,8 @@ const App = () => {
             // Make sure initialization is done before deinitializing
             initPromise.then(() => {
                 if (audioContext) {
-                    audioContext.close();
+                    console.log("Closing audio context...");
+                    audioContext.close().then(() => console.log("Audio context closed"));
                 }
             });
         };
@@ -376,25 +392,25 @@ const App = () => {
                     label='Pulse 1'
                     isPulse1
                     state={apuState.pulse1}
-                    onChange={(payload) => updatePulse('pulse1', payload)}
+                    onChange={updatePulse1}
                     disabled={!isRunning}
                 />
                 <PulseStrip 
                     label='Pulse 2'
                     state={apuState.pulse2}
-                    onChange={(payload) => updatePulse('pulse2', payload)}
+                    onChange={updatePulse2}
                     disabled={!isRunning}
                 />
                 <TriangleStrip 
                     label='Triangle'
                     state={apuState.triangle}
-                    onChange={(payload) => updateTriangle(payload)}
+                    onChange={updateTriangle}
                     disabled={!isRunning}
                 />
                 <NoiseStrip 
                     label='Noise'
                     state={apuState.noise}
-                    onChange={(payload) => updateNoise(payload)}
+                    onChange={updateNoise}
                     disabled={!isRunning}
                 />
             </div>

@@ -1,10 +1,10 @@
-import React, { PropsWithChildren } from 'react';
+import React, { memo, PropsWithChildren } from 'react';
 
 type ChannelStripGroupProps = {
     label?: string,
 }
 
-export const ChannelStripGroup = (props: PropsWithChildren<ChannelStripGroupProps>) => {
+export const ChannelStripGroup = memo((props: PropsWithChildren<ChannelStripGroupProps>) => {
     return (
         <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center', flex: '1 1 0' }}>
             <div style={{ display: 'flex', width: '100%' }}>
@@ -17,4 +17,4 @@ export const ChannelStripGroup = (props: PropsWithChildren<ChannelStripGroupProp
             </div>
         </div>
     )
-}
+});
