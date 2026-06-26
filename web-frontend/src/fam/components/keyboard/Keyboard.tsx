@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardKey } from './KeyboardKey';
 import { ChannelId } from '../../apu';
 
@@ -30,7 +30,7 @@ export const Keyboard = (props: KeyboardProps) => {
         playNoteRef.current = props.onPlayNote;
     });
 
-    const handlePlayNote = (midiNote: number) => {
+    const handlePlayNote = useCallback((midiNote: number) => {
         setActiveNotes(prevNotes => {
             if (prevNotes.has(midiNote)) return prevNotes;
 
@@ -40,9 +40,9 @@ export const Keyboard = (props: KeyboardProps) => {
             return newNotes;
         });
         playNoteRef.current(midiNote);
-    }
+    }, []);
 
-    const handleStopNote = (midiNote: number) => {
+    const handleStopNote = useCallback((midiNote: number) => {
         setActiveNotes(prevNotes => {
             if (!prevNotes.has(midiNote)) return prevNotes;
 
@@ -50,9 +50,9 @@ export const Keyboard = (props: KeyboardProps) => {
             newNotes.delete(midiNote);
             return newNotes;
         });
-    }
+    }, []);
 
-    const handleMidiMessage = (message: MIDIMessageEvent) => {
+    const handleMidiMessage = useCallback((message: MIDIMessageEvent) => {
         if (!message.data) return;
 
         const [status, note, velocity] = message.data;
@@ -64,7 +64,7 @@ export const Keyboard = (props: KeyboardProps) => {
         } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
             handleStopNote(note);
         }
-    }
+    }, [handlePlayNote, handleStopNote]);
 
     useEffect(() => {
         const activeDevice = devices.find(d => d.id === selectedDeviceId);
@@ -140,11 +140,12 @@ export const Keyboard = (props: KeyboardProps) => {
         return (
             <KeyboardKey 
                 key={noteName}
+                midiNote={midiNote}
                 baseWidthPercent={whiteKeyWidthPercent}
                 isBlack={isBlack}
                 isExtra={isExtra}
-                onPlayNote={() => handlePlayNote(midiNote)}
-                onStopNote={() => handleStopNote(midiNote)}
+                onPlayNote={handlePlayNote}
+                onStopNote={handleStopNote}
                 active={activeNotes.has(midiNote)}
                 disabled={disabled}
             />

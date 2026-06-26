@@ -1,21 +1,22 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 type KeyboardKeyProps = {
+    midiNote: number,
     baseWidthPercent: number,
     isBlack?: boolean,
     isExtra?: boolean,
     disabled?: boolean,
     active?: boolean,
-    onPlayNote: () => void
-    onStopNote: () => void
+    onPlayNote: (note: number) => void
+    onStopNote: (note: number) => void
 }
 
-export const KeyboardKey = (props: KeyboardKeyProps) => {
+export const KeyboardKey = memo((props: KeyboardKeyProps) => {
     const color = (props.active && !props.disabled) ? 'yellow' : props.isBlack ? '#222' : (props.isExtra ? '#444' : '#ccc');
 
     const handlePointerDown = (e: React.PointerEvent) => {
         if (props.disabled) return;
-        props.onPlayNote();
+        props.onPlayNote(props.midiNote);
     }
 
     const handlePointerEnter = (e: React.PointerEvent) => {
@@ -23,12 +24,12 @@ export const KeyboardKey = (props: KeyboardKeyProps) => {
 
         // Check primary button / touch
         if (e.buttons === 1) {
-            props.onPlayNote();
+            props.onPlayNote(props.midiNote);
         }
     }
 
     const handlePointerUpOrLeave = (e: React.PointerEvent) => {
-        props.onStopNote();
+        props.onStopNote(props.midiNote);
     }
 
     return (
@@ -61,4 +62,4 @@ export const KeyboardKey = (props: KeyboardKeyProps) => {
             />
         </div>
     )
-}
+});
