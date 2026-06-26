@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardKey } from './KeyboardKey';
 import { ChannelId } from '../../apu';
 
@@ -6,11 +6,11 @@ type KeyboardProps = {
     channel: ChannelId,
     minNote?: number,
     maxNote?: number,
-    onPlayNote: (midiNote: number) => void,
+    onPlayNote: (channel: ChannelId, midiNote: number) => void,
     onSetChannel: (channel: ChannelId) => void,
 }
 
-export const Keyboard = (props: KeyboardProps) => {
+export const Keyboard = memo((props: KeyboardProps) => {
     const totalKeys = 97;
     const whiteKeys = 57;
     const notePattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -38,8 +38,8 @@ export const Keyboard = (props: KeyboardProps) => {
             return next;
         });
 
-        playNoteRef.current(midiNote);
-    }, []);
+        playNoteRef.current(props.channel, midiNote);
+    }, [props.channel]);
 
     const handleStopNote = useCallback((midiNote: number) => {
         setActiveNotes(prev => {
@@ -199,4 +199,4 @@ export const Keyboard = (props: KeyboardProps) => {
             </div>
         </div>
     )
-}
+});

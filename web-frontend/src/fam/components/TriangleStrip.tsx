@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useCallback } from 'react';
 import { ChannelStrip, ChannelStripProps } from './ChannelStrip';
 import { Slider } from './Slider';
 import { Switch } from './Switch';
@@ -7,7 +7,28 @@ import { TriangleChannel } from '../apu';
 
 type TriangleStripProps = ChannelStripProps<TriangleChannel>;
 
-export const TriangleStrip = (props: TriangleStripProps) => {
+export const TriangleStrip = memo((props: TriangleStripProps) => {
+
+    const setLoop = useCallback((value: boolean) => {
+        props.onChange({ loop: value });
+    }, [props.onChange]);
+
+    const setLinearCounterLoad = useCallback((value: number) => {
+        props.onChange({ linearCounterLoad: value });
+    }, [props.onChange]);
+
+    const setTimerPeriod = useCallback((val: number) => {
+        props.onChange({ timerPeriod: val });
+    }, [props.onChange]);
+
+    const setLengthCounterLoad = useCallback((val: number) => {
+        props.onChange({ lengthCounterLoad: val });
+    }, [props.onChange]);
+
+    const handleTriggerNote = useCallback(() => {
+        props.onChange({ lengthCounterLoad: props.state.lengthCounterLoad });
+    }, [props.onChange, props.state.lengthCounterLoad]);
+
     return (
         <ChannelStrip<TriangleChannel>
             state={props.state}
@@ -19,7 +40,7 @@ export const TriangleStrip = (props: TriangleStripProps) => {
                 <Switch 
                     label='Loop' 
                     checked={props.state.loop}
-                    onChange={(val) => props.onChange({ loop: val })}
+                    onChange={setLoop}
                     disabled={props.disabled || !props.state.enabled}
                 />
                 <Slider
@@ -27,7 +48,7 @@ export const TriangleStrip = (props: TriangleStripProps) => {
                     value={props.state.linearCounterLoad}
                     min={0}
                     max={0x7F}
-                    onChange={(val) => props.onChange({ linearCounterLoad: val })}
+                    onChange={setLinearCounterLoad}
                     disabled={props.disabled || !props.state.enabled}
                 />
             </ChannelStripGroup>
@@ -40,7 +61,7 @@ export const TriangleStrip = (props: TriangleStripProps) => {
                             value={props.state.timerPeriod}
                             min={0}
                             max={0x7FF}
-                            onChange={(val) => props.onChange({ timerPeriod: val })}
+                            onChange={setTimerPeriod}
                             disabled={props.disabled || !props.state.enabled}
                         />
                         <Slider
@@ -48,13 +69,13 @@ export const TriangleStrip = (props: TriangleStripProps) => {
                             value={props.state.lengthCounterLoad}
                             min={0}
                             max={0x1F}
-                            onChange={(val) => props.onChange({ lengthCounterLoad: val })}
+                            onChange={setLengthCounterLoad}
                             disabled={props.disabled || !props.state.enabled}
                         />
                     </div>
                     <div>
                         <button 
-                            onClick={() => props.onChange({ lengthCounterLoad: props.state.lengthCounterLoad })}
+                            onClick={handleTriggerNote}
                             disabled={props.disabled || !props.state.enabled}
                         >
                             Trigger note
@@ -64,4 +85,4 @@ export const TriangleStrip = (props: TriangleStripProps) => {
             </ChannelStripGroup>
         </ChannelStrip>
     )
-}
+});

@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import React, { memo, PropsWithChildren } from 'react';
 import { BaseModule } from './BaseModule';
 import { Channel } from '../apu';
 
@@ -9,7 +9,9 @@ export type ChannelStripProps<T extends Channel = Channel> = {
     disabled?: boolean,
 };
 
-export const ChannelStrip = <T extends Channel = Channel>(props: PropsWithChildren<ChannelStripProps<T>>) => {
+const wrapGenericMemo: <T>(component: T) => T = memo
+
+export const ChannelStrip = wrapGenericMemo(<T extends Channel = Channel>(props: PropsWithChildren<ChannelStripProps<T>>) => {
     const setEnabled = (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
         props.onChange({ enabled: e.target.checked } as Partial<T>);
     }
@@ -40,4 +42,4 @@ export const ChannelStrip = <T extends Channel = Channel>(props: PropsWithChildr
             </div>
         </BaseModule>
     );
-}
+});
