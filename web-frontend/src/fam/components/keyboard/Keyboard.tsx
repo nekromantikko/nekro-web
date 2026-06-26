@@ -87,7 +87,7 @@ export const Keyboard = memo((props: KeyboardProps) => {
                 activeDevice.onmidimessage = null;
             }
         }
-    }, [selectedDeviceId, devices]);
+    }, [selectedDeviceId, devices, handleMidiMessage]);
 
     useEffect(() => {
         let midiAccess: MIDIAccess | null = null;
@@ -125,7 +125,7 @@ export const Keyboard = memo((props: KeyboardProps) => {
             initPromise.then(() => {
                 if (midiAccess) {
                     midiAccess.onstatechange = null;
-                    for (let input of midiAccess.inputs.values()) {
+                    for (const input of midiAccess.inputs.values()) {
                         input.onmidimessage = null;
                     }
                 }
@@ -200,3 +200,5 @@ export const Keyboard = memo((props: KeyboardProps) => {
         </div>
     )
 });
+
+Keyboard.displayName = 'Keyboard';

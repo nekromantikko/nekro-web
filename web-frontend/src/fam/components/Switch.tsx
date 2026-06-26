@@ -31,3 +31,5 @@ export const Switch = memo((props: SwitchProps) => {
         </div>
     );
 });
+
+Switch.displayName = 'Switch';

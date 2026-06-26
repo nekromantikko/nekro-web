@@ -18,3 +18,5 @@ export const ChannelStripGroup = memo((props: PropsWithChildren<ChannelStripGrou
         </div>
     )
 });
+
+ChannelStripGroup.displayName = 'ChannelStripGroup';

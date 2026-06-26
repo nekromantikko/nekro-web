@@ -37,3 +37,5 @@ export const Slider = memo((props: SliderProps) => {
         </div>
     );
 });
+
+Slider.displayName = 'Slider';

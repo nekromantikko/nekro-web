@@ -9,47 +9,49 @@ type TriangleStripProps = ChannelStripProps<TriangleChannel>;
 
 export const TriangleStrip = memo((props: TriangleStripProps) => {
 
+    const { label, onChange, state, disabled } = props;
+
     const setLoop = useCallback((value: boolean) => {
-        props.onChange({ loop: value });
-    }, [props.onChange]);
+        onChange({ loop: value });
+    }, [onChange]);
 
     const setLinearCounterLoad = useCallback((value: number) => {
-        props.onChange({ linearCounterLoad: value });
-    }, [props.onChange]);
+        onChange({ linearCounterLoad: value });
+    }, [onChange]);
 
     const setTimerPeriod = useCallback((val: number) => {
-        props.onChange({ timerPeriod: val });
-    }, [props.onChange]);
+        onChange({ timerPeriod: val });
+    }, [onChange]);
 
     const setLengthCounterLoad = useCallback((val: number) => {
-        props.onChange({ lengthCounterLoad: val });
-    }, [props.onChange]);
+        onChange({ lengthCounterLoad: val });
+    }, [onChange]);
 
     const handleTriggerNote = useCallback(() => {
-        props.onChange({ lengthCounterLoad: props.state.lengthCounterLoad });
-    }, [props.onChange, props.state.lengthCounterLoad]);
+        onChange({ lengthCounterLoad: state.lengthCounterLoad });
+    }, [onChange, state.lengthCounterLoad]);
 
     return (
         <ChannelStrip<TriangleChannel>
-            state={props.state}
-            label={props.label}
-            onChange={props.onChange}
-            disabled={props.disabled}
+            state={state}
+            label={label}
+            onChange={onChange}
+            disabled={disabled}
         >
             <ChannelStripGroup label={'$4008'}>
                 <Switch 
                     label='Loop' 
-                    checked={props.state.loop}
+                    checked={state.loop}
                     onChange={setLoop}
-                    disabled={props.disabled || !props.state.enabled}
+                    disabled={disabled || !state.enabled}
                 />
                 <Slider
                     label='Linear counter load'
-                    value={props.state.linearCounterLoad}
+                    value={state.linearCounterLoad}
                     min={0}
                     max={0x7F}
                     onChange={setLinearCounterLoad}
-                    disabled={props.disabled || !props.state.enabled}
+                    disabled={disabled || !state.enabled}
                 />
             </ChannelStripGroup>
             <ChannelStripGroup label={'$4009'} />
@@ -58,25 +60,25 @@ export const TriangleStrip = memo((props: TriangleStripProps) => {
                     <div style={{ display: 'flex' }}>
                         <Slider
                             label='Period'
-                            value={props.state.timerPeriod}
+                            value={state.timerPeriod}
                             min={0}
                             max={0x7FF}
                             onChange={setTimerPeriod}
-                            disabled={props.disabled || !props.state.enabled}
+                            disabled={disabled || !state.enabled}
                         />
                         <Slider
                             label='Length counter load'
-                            value={props.state.lengthCounterLoad}
+                            value={state.lengthCounterLoad}
                             min={0}
                             max={0x1F}
                             onChange={setLengthCounterLoad}
-                            disabled={props.disabled || !props.state.enabled}
+                            disabled={disabled || !state.enabled}
                         />
                     </div>
                     <div>
                         <button 
                             onClick={handleTriggerNote}
-                            disabled={props.disabled || !props.state.enabled}
+                            disabled={disabled || !state.enabled}
                         >
                             Trigger note
                         </button>
@@ -86,3 +88,5 @@ export const TriangleStrip = memo((props: TriangleStripProps) => {
         </ChannelStrip>
     )
 });
+
+TriangleStrip.displayName = 'TriangleStrip';
