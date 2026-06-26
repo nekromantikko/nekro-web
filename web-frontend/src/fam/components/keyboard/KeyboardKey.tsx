@@ -5,14 +5,30 @@ type KeyboardKeyProps = {
     isBlack?: boolean,
     isExtra?: boolean,
     disabled?: boolean,
-    onPlayNote?: () => void
+    active?: boolean,
+    onPlayNote: () => void
+    onStopNote: () => void
 }
 
 export const KeyboardKey = (props: KeyboardKeyProps) => {
-    const color = props.isBlack ? '#222' : (props.isExtra ? '#444' : '#ccc');
+    const color = (props.active && !props.disabled) ? 'yellow' : props.isBlack ? '#222' : (props.isExtra ? '#444' : '#ccc');
 
-    const handlePlayNote = () => {
-        if (props.onPlayNote) props.onPlayNote();
+    const handlePointerDown = (e: React.PointerEvent) => {
+        if (props.disabled) return;
+        props.onPlayNote();
+    }
+
+    const handlePointerEnter = (e: React.PointerEvent) => {
+        if (props.disabled) return;
+
+        // Check primary button / touch
+        if (e.buttons === 1) {
+            props.onPlayNote();
+        }
+    }
+
+    const handlePointerUpOrLeave = (e: React.PointerEvent) => {
+        props.onStopNote();
     }
 
     return (
@@ -22,6 +38,7 @@ export const KeyboardKey = (props: KeyboardKeyProps) => {
             display: 'flex',
             alignItems: 'stretch',
             flex: 0,
+            touchAction: 'none',
         }}>
             <button 
                 style={{ 
@@ -33,9 +50,13 @@ export const KeyboardKey = (props: KeyboardKeyProps) => {
                     transform: props.isBlack ? 'translate(-50%)' : 'none',
                     padding: 0,
         
-                    cursor: props.disabled ? 'default' : 'pointer'
+                    cursor: props.disabled ? 'default' : 'pointer',
+                    touchAction: 'none',
                 }}
-                onPointerDown={props.disabled ? undefined : handlePlayNote}
+                onPointerDown={handlePointerDown}
+                onPointerEnter={handlePointerEnter}
+                onPointerUp={handlePointerUpOrLeave}
+                onPointerLeave={handlePointerUpOrLeave}
                 disabled={props.disabled}
             />
         </div>
