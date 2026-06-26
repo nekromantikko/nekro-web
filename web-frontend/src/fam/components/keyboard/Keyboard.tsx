@@ -20,7 +20,7 @@ export const Keyboard = (props: KeyboardProps) => {
 
     const [devices, setDevices] = useState<MIDIInput[]>([]);
     const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
-    const [activeNotes, setActiveNotes] = useState<Set<number>>(new Set());
+    const [activeNotes, setActiveNotes] = useState<Map<number, number>>(new Map());
 
     // Stable container for changing prop callback
     const playNoteRef = useRef(props.onPlayNote);
@@ -31,24 +31,30 @@ export const Keyboard = (props: KeyboardProps) => {
     });
 
     const handlePlayNote = useCallback((midiNote: number) => {
-        setActiveNotes(prevNotes => {
-            if (prevNotes.has(midiNote)) return prevNotes;
-
-            const newNotes = new Set(prevNotes);
-            newNotes.add(midiNote);
-
-            return newNotes;
+        setActiveNotes(prev => {
+            const next = new Map(prev);
+            const currentCount = next.get(midiNote) || 0;
+            next.set(midiNote, currentCount + 1);
+            return next;
         });
+
         playNoteRef.current(midiNote);
     }, []);
 
     const handleStopNote = useCallback((midiNote: number) => {
-        setActiveNotes(prevNotes => {
-            if (!prevNotes.has(midiNote)) return prevNotes;
+        setActiveNotes(prev => {
+            if (!prev.has(midiNote)) return prev;
 
-            const newNotes = new Set(prevNotes);
-            newNotes.delete(midiNote);
-            return newNotes;
+            const next = new Map(prev);
+            const currentCount = next.get(midiNote)!;
+            const newCount = currentCount - 1;
+
+            if (newCount <= 0) {
+                next.delete(midiNote);
+            } else {
+                next.set(midiNote, newCount);
+            }
+            return next;
         });
     }, []);
 
