@@ -13,7 +13,7 @@ export const ControlPanel = (props: ControlPanelProps) => {
 
     return (
         <BaseModule>
-            <button id="start-audio-btn" style={{padding: "10px 20px", fontSize: "16px", cursor: "pointer"}} onClick={toggleEnabled}>
+            <button id="start-audio-btn" style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer", background: props.enabled ? 'lime' : 'darkred' }} onClick={toggleEnabled}>
                 {props.enabled ? "Turn off" : "Turn on"}
             </button>
         </BaseModule>
