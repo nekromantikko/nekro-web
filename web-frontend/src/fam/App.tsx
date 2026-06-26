@@ -312,6 +312,8 @@ const App = () => {
     }
 
     const handlePlayNote = (midiNote: number) => {
+        if (!apuState[kbChannel].enabled) return;
+
         const period = midiNoteToNesPeriod(midiNote, nesCpuFreqNtsc);
 
         if (kbChannel === 'pulse1' || kbChannel === 'pulse2') {
