@@ -1,1 +1,14 @@
 @import 'tailwindcss';
+
+@font-face {
+    font-family: 'DSEG7';
+    src: url('/fonts/DSEG7ClassicMini-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme {
+    --font-orbitron: 'Orbitron', sans-serif;
+    --font-digital: 'DSEG7', monospace;
+}

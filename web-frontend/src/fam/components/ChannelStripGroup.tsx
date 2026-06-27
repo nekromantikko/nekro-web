@@ -1,20 +1,9 @@
 import React, { memo, PropsWithChildren } from 'react';
 
-type ChannelStripGroupProps = {
-    label?: string,
-}
-
-export const ChannelStripGroup = memo((props: PropsWithChildren<ChannelStripGroupProps>) => {
+export const ChannelStripGroup = memo((props: PropsWithChildren) => {
     return (
-        <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center', flex: '1 1 0' }}>
-            <div style={{ display: 'flex', width: '100%' }}>
-                <label style={{ fontSize: 'smaller', color: 'yellow' }}>
-                    {props.label}
-                </label>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-                {props.children}
-            </div>
+        <div className="flex items-stretch my-2 w-full justify-between flex-[1_1_0]">
+            {props.children}
         </div>
     )
 });
