@@ -6,14 +6,13 @@ import { ControlPanel } from './components/ControlPanel';
 
 import processorUrl from './fam-audio-processor.ts?worker&url';
 import { Keyboard } from './components/keyboard/Keyboard';
-import { ApuState, Channel, ChannelId, NoiseChannel, PulseChannel, TriangleChannel } from './apu';
+import { ApuState, ChannelId, NoiseChannel, PulseChannel, TriangleChannel, UpdateChannelAction } from './apu';
+import { Synth } from './components/Synth';
 
 type AppState = {
     audioContext?: AudioContext;
     workletNode?: AudioWorkletNode;
 };
-
-type UpdateChannelAction<T extends Channel> = Partial<T> | ((prev: T) => Partial<T>);
 
 const initialApuState: ApuState = {
     pulse1: {
@@ -304,43 +303,21 @@ const App = () => {
         setIsRunning(isAudioContextRunning(state.audioContext));
     }, [state]);
 
-    const getMinNote = () => {
-        if (kbChannel === 'noise') {
-            return 24;
-        }
-
-        if (kbChannel === 'pulse1' || kbChannel === 'pulse2') {
-            return apuState[kbChannel].sweepNegate ? 33 : 45;
-        }
-
-        return 33;
-    }
-
-    const getMaxNote = () => {
-        if (!isRunning || !apuState[kbChannel].enabled) {
-            return 0;
-        }
-
-        if (kbChannel === 'noise') {
-            return 39;
-        }
-
-        return 108;
-    }
-
     const handlePlayNote = useCallback((channel: ChannelId, midiNote: number) => {
+        if (!isRunning) return;
+
         const period = midiNoteToNesPeriod(midiNote, nesCpuFreqNtsc);
 
         if (channel === 'pulse1' || channel === 'pulse2') {
-            updatePulse(channel, prev => prev.enabled ? { timerPeriod: period } : {});
+            updatePulse(channel, { timerPeriod: period });
         }
         if (channel === 'triangle') {
-            updateTriangle(prev => prev.enabled ? { timerPeriod: period } : {});
+            updateTriangle({ timerPeriod: period });
         }
         if (channel === 'noise') {
-            updateNoise(prev => prev.enabled ? { period: (midiNote - 24), lengthCounterLoad: prev.lengthCounterLoad } : {});
+            updateNoise(prev => ({ period: (midiNote & 0x0F), lengthCounterLoad: prev.lengthCounterLoad }) );
         }
-    }, [updatePulse, updateTriangle, updateNoise]);
+    }, [isRunning, updatePulse, updateTriangle, updateNoise]);
 
     useEffect(() => {
         let audioContext: AudioContext | null = null;
@@ -382,49 +359,47 @@ const App = () => {
     }, []);
 
     return (
-        <div style={{ minWidth: 'fit-content' }}>
-            <ControlPanel 
-                enabled={isRunning}
-                onSetEnabled={toggleRunning}
-            />
-            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', alignItems: 'stretch' }}>
-                <PulseStrip 
-                    label='Pulse 1'
-                    isPulse1
-                    state={apuState.pulse1}
-                    onChange={updatePulse1}
-                    disabled={!isRunning}
-                />
-                <PulseStrip 
-                    label='Pulse 2'
-                    state={apuState.pulse2}
-                    onChange={updatePulse2}
-                    disabled={!isRunning}
-                />
-                <TriangleStrip 
-                    label='Triangle'
-                    state={apuState.triangle}
-                    onChange={updateTriangle}
-                    disabled={!isRunning}
-                />
-                <NoiseStrip 
-                    label='Noise'
-                    state={apuState.noise}
-                    onChange={updateNoise}
-                    disabled={!isRunning}
-                />
-            </div>
-            <div style={{ marginTop: '24px', }} >
-                <Keyboard 
-                    channel={kbChannel} 
+        <div className="min-w-fit">
+            <Synth>
+                <div className="flex flex-row flex-nowrap items-stretch">
+                    <PulseStrip 
+                        label='Pulse 1'
+                        state={apuState.pulse1}
+                        onUpdateAction={updatePulse1}
+                        disabled={!isRunning}
+                    />
+                    <PulseStrip 
+                        label='Pulse 2'
+                        state={apuState.pulse2}
+                        onUpdateAction={updatePulse2}
+                        disabled={!isRunning}
+                    />
+                    <TriangleStrip 
+                        label='Triangle'
+                        state={apuState.triangle}
+                        onUpdateAction={updateTriangle}
+                        disabled={!isRunning}
+                    />
+                    <NoiseStrip 
+                        label='Noise'
+                        state={apuState.noise}
+                        onUpdateAction={updateNoise}
+                        disabled={!isRunning}
+                    />
+                </div>
+                <ControlPanel 
+                    channel={kbChannel}
+                    enabled={isRunning}
                     onSetChannel={setKbChannel}
-                    onPlayNote={handlePlayNote}
-                    minNote={getMinNote()} 
-                    maxNote={getMaxNote()}
+                    onSetEnabled={toggleRunning}
                 />
-            </div>
-            <p style={{ textAlign: 'end', color: '#999', margin: '8px' }}>
-                Powered by <a style={{ color: 'bisque' }} href='https://github.com/nekromantikko/fam'>fam</a>
+            </Synth>
+            <Keyboard 
+                channel={kbChannel} 
+                onPlayNote={handlePlayNote}
+            />
+            <p className="text-s text-end text-neutral-500 m-4">
+                Powered by <a className="text-orange-300" href='https://github.com/nekromantikko/fam'>fam</a>
             </p>
         </div>
     );

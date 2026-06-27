@@ -4,6 +4,8 @@ export interface Channel {
     enabled: boolean,
 }
 
+export type UpdateChannelAction<T extends Channel> = Partial<T> | ((prev: T) => Partial<T>);
+
 export interface PulseChannel extends Channel {
     volume: number,
     constantVolume: boolean,

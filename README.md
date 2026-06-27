@@ -39,3 +39,7 @@ npm run build
 ```
 
 Output is written to `web-frontend/dist/`.
+
+## Credits & Attributions
+
+* **Typography**: The fam sandbox digital readouts utilize the [DSEG Font Family](https://github.com/keshikan/DSEG) by kshji, licensed under the [SIL Open Font License 1.1](https://scripts.sil.org/OFL). See `public/fonts/DSEG-LICENSE.txt` for the full license text.

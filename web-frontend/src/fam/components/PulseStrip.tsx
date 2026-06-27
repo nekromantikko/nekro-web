@@ -1,167 +1,149 @@
 import React, { memo, useCallback } from 'react';
 import { ChannelStrip, ChannelStripProps } from './ChannelStrip';
-import { Slider } from './Slider';
-import { Switch } from './Switch';
-import { ChannelStripGroup } from './ChannelStripGroup';
 import { PulseChannel } from '../apu';
+import { PanelSection } from './PanelSection';
+import { EnvelopeSection } from './EnvelopeSection';
+import { Stepper } from './Stepper';
+import { LengthCounterSection } from './LengthCounterSection';
+import { Toggle } from './Toggle';
 
-type PulseStripProps = ChannelStripProps<PulseChannel> & {
-    isPulse1?: boolean
-}
+type PulseStripProps = ChannelStripProps<PulseChannel>;
 
 export const PulseStrip = memo((props: PulseStripProps) => {
 
-    const { label, onChange, state, disabled, isPulse1 } = props;
+    const { label, onUpdateAction, state, disabled } = props;
 
-    const setUseEnvelope = useCallback((value: boolean) => {
-        onChange({ constantVolume: !value });
-    }, [onChange]);
+    const incrementDutyCycle = useCallback(() => {
+        onUpdateAction(prev => {
+            const newCycle = prev.dutyCycle < 3 ? prev.dutyCycle + 1 : 0;
+            return { dutyCycle: newCycle };
+        });
+    }, [onUpdateAction]);
 
-    const setLoop = useCallback((value: boolean) => {
-        onChange({ loop: value });
-    }, [onChange]);
+    const decrementDutyCycle = useCallback(() => {
+        onUpdateAction(prev => {
+            const newCycle = prev.dutyCycle > 0 ? prev.dutyCycle - 1 : 3;
+            return { dutyCycle: newCycle };
+        });
+    }, [onUpdateAction]);
 
-    const setVolume = useCallback((value: number) => {
-        onChange({ volume: value });
-    }, [onChange]);
+    const toggleSweepEnabled = useCallback(() => {
+        onUpdateAction(prev => ({ sweepEnabled: !prev.sweepEnabled }));
+    }, [onUpdateAction]);
 
-    const setDutyCyle = useCallback((value: number) => {
-        onChange({ dutyCycle: value });
-    }, [onChange]);
+    const toggleSweepNegate = useCallback(() => {
+        onUpdateAction(prev => ({ sweepNegate: !prev.sweepNegate }));
+    }, [onUpdateAction]);
 
-    const setSweepEnabled = useCallback((val: boolean) => {
-        onChange({ sweepEnabled: val });
-    }, [onChange]);
+    const incrementSweepShift = useCallback(() => {
+        onUpdateAction(prev => {
+            const newShift = prev.sweepShift < 7 ? prev.sweepShift + 1 : 0;
+            return { sweepShift: newShift };
+        });
+    }, [onUpdateAction]);
 
-    const setSweepNegate = useCallback((val: boolean) => {
-        onChange({ sweepNegate: val });
-    }, [onChange]);
+    const decrementSweepShift = useCallback(() => {
+        onUpdateAction(prev => {
+            const newShift = prev.sweepShift > 0 ? prev.sweepShift - 1 : 7;
+            return { sweepShift: newShift };
+        });
+    }, [onUpdateAction]);
 
-    const setSweepShift = useCallback((val: number) => {
-        onChange({ sweepShift: val });
-    }, [onChange]);
+    const incrementSweepPeriod = useCallback(() => {
+        onUpdateAction(prev => {
+            const newPeriod = prev.sweepPeriod < 7 ? prev.sweepPeriod + 1 : 0;
+            return { sweepPeriod: newPeriod };
+        });
+    }, [onUpdateAction]);
 
-    const setSweepPeriod = useCallback((val: number) => {
-        onChange({ sweepPeriod: val });
-    }, [onChange]);
+    const decrementSweepPeriod = useCallback(() => {
+        onUpdateAction(prev => {
+            const newPeriod = prev.sweepPeriod > 0 ? prev.sweepPeriod - 1 : 7;
+            return { sweepPeriod: newPeriod };
+        });
+    }, [onUpdateAction]);
 
-    const setTimerPeriod = useCallback((val: number) => {
-        onChange({ timerPeriod: val });
-    }, [onChange]);
+    const incrementTimerPeriod = useCallback(() => {
+        onUpdateAction(prev => {
+            const newPeriod = prev.timerPeriod < 0x7FF ? prev.timerPeriod + 1 : 0;
+            return { timerPeriod: newPeriod };
+        });
+    }, [onUpdateAction]);
 
-    const setLengthCounterLoad = useCallback((val: number) => {
-        onChange({ lengthCounterLoad: val });
-    }, [onChange]);
-
-    const handleTriggerNote = useCallback(() => {
-        onChange({ lengthCounterLoad: state.lengthCounterLoad });
-    }, [onChange, state.lengthCounterLoad]);
+    const decrementTimerPeriod = useCallback(() => {
+        onUpdateAction(prev => {
+            const newPeriod = prev.timerPeriod > 0 ? prev.timerPeriod - 1 : 0x7FF;
+            return { timerPeriod: newPeriod };
+        });
+    }, [onUpdateAction]);
 
     return (
         <ChannelStrip<PulseChannel> 
             state={state}
             label={label} 
-            onChange={onChange}
+            onUpdateAction={onUpdateAction}
             disabled={disabled}
         >
-            <ChannelStripGroup label={isPulse1 ? '$4000' : '$4004'}>
-                <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center' }}>
-                    <Switch
-                        label='Use envelope' 
-                        checked={!state.constantVolume}
-                        onChange={setUseEnvelope}
-                        disabled={disabled || !state.enabled}
-                    />
-                    <Switch 
-                        label='Loop' 
-                        checked={state.loop}
-                        onChange={setLoop}
-                        disabled={disabled || !state.enabled}
-                    />
-                </div>
-                <div style={{ display: 'flex' }}>
-                    <Slider
-                        label={state.constantVolume ? 'Volume' : 'Envelope period'}
-                        value={state.volume}
-                        min={0}
-                        max={0xF}
-                        onChange={setVolume}
-                        disabled={disabled || !state.enabled}
-                    />
-                    <Slider
-                        label='Duty cycle'
+            <div className="flex flex-row flex-wrap items-center">
+                <EnvelopeSection 
+                    constantVolume={state.constantVolume}
+                    loop={state.loop}
+                    volume={state.volume}
+                    disabled={disabled}
+                    onUpdateAction={onUpdateAction}
+                />
+                <PanelSection label='duty'>
+                    <Stepper 
+                        label='cycle'
                         value={state.dutyCycle}
-                        min={0}
-                        max={3}
-                        onChange={setDutyCyle}
-                        disabled={disabled || !state.enabled}
+                        length={1}
+                        disabled={disabled}
+                        onIncrement={incrementDutyCycle}
+                        onDecrement={decrementDutyCycle}
                     />
-                </div>
-            </ChannelStripGroup>
-            <ChannelStripGroup label={isPulse1 ? '$4001' : '$4005'}>
-                <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center' }}>
-                    <Switch
-                        label='Enable sweep' 
-                        checked={state.sweepEnabled}
-                        onChange={setSweepEnabled}
-                        disabled={disabled || !state.enabled}
-                    />
-                    <Switch 
-                        label='Negate sweep' 
-                        checked={state.sweepNegate}
-                        onChange={setSweepNegate}
-                        disabled={disabled || !state.enabled}
-                    />
-                </div>
-                <div style={{ display: 'flex' }}>
-                    <Slider
-                        label='Sweep shift'
-                        value={state.sweepShift}
-                        min={0}
-                        max={7}
-                        onChange={setSweepShift}
-                        disabled={disabled || !state.enabled}
-                    />
-                    <Slider
-                        label='Sweep period'
-                        value={state.sweepPeriod}
-                        min={0}
-                        max={7}
-                        onChange={setSweepPeriod}
-                        disabled={disabled || !state.enabled}
-                    />
-                </div>
-            </ChannelStripGroup>
-            <ChannelStripGroup label={isPulse1 ? '$4002 / $4003' : '$4006 / $4007'}>
-                <div style={{ display: 'flex', flexFlow: 'column', alignItems: 'center'  }}>
-                    <div style={{ display: 'flex' }}>
-                        <Slider
-                            label='Period'
-                            value={state.timerPeriod}
-                            min={0}
-                            max={0x7FF}
-                            onChange={setTimerPeriod}
-                            disabled={disabled || !state.enabled}
+                </PanelSection>
+                <PanelSection label='sweep'>
+                    <div className="flex flex-row flex-wrap items-center basis-1/3 grow shrink justify-center">
+                        <Toggle label='enable' value={state.sweepEnabled} onPress={toggleSweepEnabled} disabled={disabled} />
+                        <Toggle label='negate' value={state.sweepNegate} onPress={toggleSweepNegate} disabled={disabled} />
+                    </div>
+                    <div className="flex flex-row flex-wrap items-center basis-2/3 grow shrink justify-center">
+                        <Stepper 
+                            label='shift'
+                            value={state.sweepShift}
+                            length={1}
+                            disabled={disabled}
+                            onIncrement={incrementSweepShift}
+                            onDecrement={decrementSweepShift}
                         />
-                        <Slider
-                            label='Length counter load'
-                            value={state.lengthCounterLoad}
-                            min={0}
-                            max={0x1F}
-                            onChange={setLengthCounterLoad}
-                            disabled={disabled || !state.enabled}
+                        <Stepper 
+                            label='period'
+                            value={state.sweepPeriod}
+                            length={1}
+                            disabled={disabled}
+                            onIncrement={incrementSweepPeriod}
+                            onDecrement={decrementSweepPeriod}
                         />
                     </div>
-                    <div>
-                        <button 
-                            onClick={handleTriggerNote}
-                            disabled={disabled || !state.enabled}
-                        >
-                            Trigger note
-                        </button>
-                    </div>
-                </div>
-            </ChannelStripGroup>
+                </PanelSection>
+            </div>
+            <div className="flex flex-row flex-wrap items-center">
+                <PanelSection label='timer'>
+                    <Stepper 
+                        label='period'
+                        value={state.timerPeriod}
+                        length={4}
+                        disabled={disabled}
+                        onIncrement={incrementTimerPeriod}
+                        onDecrement={decrementTimerPeriod}
+                    />
+                </PanelSection>
+                <LengthCounterSection 
+                    lengthCounterLoad={state.lengthCounterLoad}
+                    onUpdateAction={onUpdateAction}
+                    disabled={disabled}
+                />
+            </div>
         </ChannelStrip>
     )
 });

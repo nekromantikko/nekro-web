@@ -1,13 +1,11 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardKey } from './KeyboardKey';
 import { ChannelId } from '../../apu';
+import { MidiDeviceSelector } from './MidiSelector';
 
 type KeyboardProps = {
     channel: ChannelId,
-    minNote?: number,
-    maxNote?: number,
     onPlayNote: (channel: ChannelId, midiNote: number) => void,
-    onSetChannel: (channel: ChannelId) => void,
 }
 
 export const Keyboard = memo((props: KeyboardProps) => {
@@ -141,7 +139,6 @@ export const Keyboard = memo((props: KeyboardProps) => {
         const noteName = `${notePattern[patternIndex]}${octave}`;
         const isBlack = blackNoteIndices.includes(patternIndex);
         const isExtra = index < 9; // Imperial Bösendorfer extra bass keys starting from C0
-        const disabled = (props.minNote != null && props.minNote > midiNote) || (props.maxNote != null && props.maxNote < midiNote);
 
         return (
             <KeyboardKey 
@@ -153,48 +150,18 @@ export const Keyboard = memo((props: KeyboardProps) => {
                 onPlayNote={handlePlayNote}
                 onStopNote={handleStopNote}
                 active={activeNotes.has(midiNote)}
-                disabled={disabled}
             />
         )
     });
 
     return (
         <div>
-            <div style={{ margin: '8px', display: 'flex', gap: '24px' }} >
-                <div style={{ display: 'flex', gap: '16px' }} >
-                    <label>
-                        Keyboard affects channel
-                    </label>
-                    <select
-                        value={props.channel}
-                        onChange={(e) => props.onSetChannel(e.target.value as ChannelId)}
-                    >
-                        <option value={'pulse1'}>Pulse 1</option>
-                        <option value={'pulse2'}>Pulse 2</option>
-                        <option value={'triangle'}>Triangle</option>
-                        <option value={'noise'}>Noise</option>
-                    </select>
-                </div>
-                <div style={{ display: 'flex', gap: '16px' }} >
-                    <label>
-                        Active device
-                    </label>
-                    <select
-                        value={selectedDeviceId}
-                        onChange={(e) => setSelectedDeviceId(e.target.value)}
-                    >
-                        <>
-                        <option key='none' value='' >None</option>
-                        {devices.map(input => (
-                            <option key={input.id} value={input.id}>
-                                {input.name}
-                            </option>
-                        ))}
-                        </>
-                    </select>
-                </div>
-            </div>
-            <div style={{ display: 'flex', containerType: 'inline-size', touchAction: 'none', }}>
+            <MidiDeviceSelector 
+                selectedDeviceId={selectedDeviceId}
+                setSelectedDeviceId={setSelectedDeviceId}
+                devices={devices}
+            />
+            <div className="@container flex touch-none">
                 {keys}
             </div>
         </div>
