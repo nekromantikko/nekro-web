@@ -1,5 +1,6 @@
 import React from 'react';
 import { BaseModule } from './BaseModule';
+import { Led } from './Led';
 
 type ControlPanelProps = {
     enabled?: boolean,
@@ -13,9 +14,12 @@ export const ControlPanel = (props: ControlPanelProps) => {
 
     return (
         <BaseModule>
-            <button id="start-audio-btn" style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer", background: props.enabled ? 'lime' : 'darkred' }} onClick={toggleEnabled}>
-                {props.enabled ? "Turn off" : "Turn on"}
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+                <Led active={props.enabled} color='green' />
+                <button id="start-audio-btn" style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer", background: props.enabled ? 'lime' : 'darkred' }} onClick={toggleEnabled}>
+                    {props.enabled ? "Turn off" : "Turn on"}
+                </button>
+            </div>
         </BaseModule>
     )
 }
