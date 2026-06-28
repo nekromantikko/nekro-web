@@ -75,9 +75,6 @@ export const Keyboard = memo((props: KeyboardProps) => {
         if (activeDevice) {
             console.log(`Setting up message handler for active device ${activeDevice.name}`);
             activeDevice.onmidimessage = handleMidiMessage;
-        } else if (selectedDeviceId === '' && devices.length > 0) {
-            // Automatically select first device if none selected
-            setSelectedDeviceId(devices[0].id);
         }
 
         return () => {
