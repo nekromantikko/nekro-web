@@ -39,37 +39,31 @@ export const NoiseStrip = memo((props: NoiseStripProps) => {
             onUpdateAction={onUpdateAction}
             disabled={disabled}
         >
-            <div className="flex flex-col flex-[1_1_0] justify-between">
-                <div>
-                    <EnvelopeSection 
-                        constantVolume={state.constantVolume}
-                        loop={state.loop}
-                        volume={state.volume}
-                        disabled={disabled}
-                        onUpdateAction={onUpdateAction}
-                    />
+            <EnvelopeSection 
+                constantVolume={state.constantVolume}
+                loop={state.loop}
+                volume={state.volume}
+                disabled={disabled}
+                onUpdateAction={onUpdateAction}
+            />
+            <PanelSection label='timer'>
+                <div className="flex flex-row grow">
+                    <Toggle label='mode' value={state.mode} onPress={toggleMode} disabled={disabled} />
                 </div>
-                <div className="flex flex-row flex-wrap items-center">
-                    <PanelSection label='timer'>
-                        <div className="flex flex-row grow">
-                            <Toggle label='mode' value={state.mode} onPress={toggleMode} disabled={disabled} />
-                        </div>
-                        <Stepper
-                            label='period'
-                            value={state.period}
-                            length={2}
-                            disabled={disabled}
-                            onIncrement={incrementPeriod}
-                            onDecrement={decrementPeriod}
-                        />
-                    </PanelSection>
-                    <LengthCounterSection
-                        lengthCounterLoad={state.lengthCounterLoad}
-                        onUpdateAction={onUpdateAction}
-                        disabled={disabled}
-                    />
-                </div>
-            </div>
+                <Stepper
+                    label='period'
+                    value={state.period}
+                    length={2}
+                    disabled={disabled}
+                    onIncrement={incrementPeriod}
+                    onDecrement={decrementPeriod}
+                />
+            </PanelSection>
+            <LengthCounterSection
+                lengthCounterLoad={state.lengthCounterLoad}
+                onUpdateAction={onUpdateAction}
+                disabled={disabled}
+            />
         </ChannelStrip>
     )
 });

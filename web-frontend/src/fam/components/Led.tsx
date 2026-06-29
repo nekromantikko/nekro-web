@@ -32,9 +32,9 @@ const colorMaps = {
 };
 
 const sizeMaps = {
-  sm: { core: 'h-2.5 w-2.5', flare: '-inset-2' },
-  md: { core: 'h-4 w-4', flare: '-inset-4' },
-  lg: { core: 'h-6 w-6', flare: '-inset-6' },
+  sm: { core: 'h-2 w-2', flare: '-inset-2' },
+  md: { core: 'h-3 w-3', flare: '-inset-3' },
+  lg: { core: 'h-4 w-4', flare: '-inset-4' },
 };
 
 export const Led = memo(({ active = false, color = 'red', size = 'md' }: LedProps) => {

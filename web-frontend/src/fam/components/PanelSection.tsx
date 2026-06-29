@@ -11,10 +11,10 @@ export const PanelSection = memo(({ label, solid, children }: PropsWithChildren<
         <div className={`
             border-solid
             border-olive-300
-            border-4
+            border-2
             rounded-2xl
-            px-4
-            py-6
+            px-2
+            py-3
             m-2
             ${solid ? 'bg-olive-300' : 'bg-transparent'}
             relative
@@ -22,8 +22,8 @@ export const PanelSection = memo(({ label, solid, children }: PropsWithChildren<
             flex flex-row flex-wrap justify-around items-center
         `}>
             <div className="absolute inset-x-0 top-0 -translate-y-1/2 flex justify-center">
-                <div className="bg-mist-600 px-3 py-1 rounded-full">
-                    <Label size='lg'>{label}</Label>
+                <div className="bg-mist-600 px-2 py-1 rounded-full">
+                    <Label>{label}</Label>
                 </div>
             </div>
             {children}

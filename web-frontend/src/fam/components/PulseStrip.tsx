@@ -84,66 +84,62 @@ export const PulseStrip = memo((props: PulseStripProps) => {
             onUpdateAction={onUpdateAction}
             disabled={disabled}
         >
-            <div className="flex flex-row flex-wrap items-center">
-                <EnvelopeSection 
-                    constantVolume={state.constantVolume}
-                    loop={state.loop}
-                    volume={state.volume}
+            <EnvelopeSection 
+                constantVolume={state.constantVolume}
+                loop={state.loop}
+                volume={state.volume}
+                disabled={disabled}
+                onUpdateAction={onUpdateAction}
+            />
+            <PanelSection label='duty'>
+                <Stepper 
+                    label='cycle'
+                    value={state.dutyCycle}
+                    length={1}
                     disabled={disabled}
-                    onUpdateAction={onUpdateAction}
+                    onIncrement={incrementDutyCycle}
+                    onDecrement={decrementDutyCycle}
                 />
-                <PanelSection label='duty'>
+            </PanelSection>
+            <PanelSection label='sweep'>
+                <div className="flex flex-row flex-wrap items-center basis-1/3 grow shrink justify-center">
+                    <Toggle label='enable' value={state.sweepEnabled} onPress={toggleSweepEnabled} disabled={disabled} />
+                    <Toggle label='negate' value={state.sweepNegate} onPress={toggleSweepNegate} disabled={disabled} />
+                </div>
+                <div className="flex flex-row flex-wrap items-center basis-2/3 grow shrink justify-center">
                     <Stepper 
-                        label='cycle'
-                        value={state.dutyCycle}
+                        label='shift'
+                        value={state.sweepShift}
                         length={1}
                         disabled={disabled}
-                        onIncrement={incrementDutyCycle}
-                        onDecrement={decrementDutyCycle}
+                        onIncrement={incrementSweepShift}
+                        onDecrement={decrementSweepShift}
                     />
-                </PanelSection>
-                <PanelSection label='sweep'>
-                    <div className="flex flex-row flex-wrap items-center basis-1/3 grow shrink justify-center">
-                        <Toggle label='enable' value={state.sweepEnabled} onPress={toggleSweepEnabled} disabled={disabled} />
-                        <Toggle label='negate' value={state.sweepNegate} onPress={toggleSweepNegate} disabled={disabled} />
-                    </div>
-                    <div className="flex flex-row flex-wrap items-center basis-2/3 grow shrink justify-center">
-                        <Stepper 
-                            label='shift'
-                            value={state.sweepShift}
-                            length={1}
-                            disabled={disabled}
-                            onIncrement={incrementSweepShift}
-                            onDecrement={decrementSweepShift}
-                        />
-                        <Stepper 
-                            label='period'
-                            value={state.sweepPeriod}
-                            length={1}
-                            disabled={disabled}
-                            onIncrement={incrementSweepPeriod}
-                            onDecrement={decrementSweepPeriod}
-                        />
-                    </div>
-                </PanelSection>
-            </div>
-            <div className="flex flex-row flex-wrap items-center">
-                <PanelSection label='timer'>
                     <Stepper 
                         label='period'
-                        value={state.timerPeriod}
-                        length={4}
+                        value={state.sweepPeriod}
+                        length={1}
                         disabled={disabled}
-                        onIncrement={incrementTimerPeriod}
-                        onDecrement={decrementTimerPeriod}
+                        onIncrement={incrementSweepPeriod}
+                        onDecrement={decrementSweepPeriod}
                     />
-                </PanelSection>
-                <LengthCounterSection 
-                    lengthCounterLoad={state.lengthCounterLoad}
-                    onUpdateAction={onUpdateAction}
+                </div>
+            </PanelSection>
+            <PanelSection label='timer'>
+                <Stepper 
+                    label='period'
+                    value={state.timerPeriod}
+                    length={4}
                     disabled={disabled}
+                    onIncrement={incrementTimerPeriod}
+                    onDecrement={decrementTimerPeriod}
                 />
-            </div>
+            </PanelSection>
+            <LengthCounterSection 
+                lengthCounterLoad={state.lengthCounterLoad}
+                onUpdateAction={onUpdateAction}
+                disabled={disabled}
+            />
         </ChannelStrip>
     )
 });
