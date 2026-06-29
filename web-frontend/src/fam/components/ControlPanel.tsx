@@ -38,7 +38,7 @@ export const ControlPanel = memo(({ channel, enabled = false, onSetEnabled, onSe
 
     return (
         <SynthPanel>
-            <div className="flex flex-row items-center justify-between grow">
+            <div className="flex flex-row items-center justify-between grow px-2">
                 <div className="flex flex-row items-center gap-4">
                     <div className="flex flex-col justify-center">
                         <Label>on</Label>

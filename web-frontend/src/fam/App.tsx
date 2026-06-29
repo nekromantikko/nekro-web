@@ -361,38 +361,42 @@ const App = () => {
     return (
         <div className="min-w-fit">
             <Synth>
-                <div className="flex flex-row flex-nowrap items-stretch">
-                    <PulseStrip 
-                        label='Pulse 1'
-                        state={apuState.pulse1}
-                        onUpdateAction={updatePulse1}
-                        disabled={!isRunning}
-                    />
-                    <PulseStrip 
-                        label='Pulse 2'
-                        state={apuState.pulse2}
-                        onUpdateAction={updatePulse2}
-                        disabled={!isRunning}
-                    />
-                    <TriangleStrip 
-                        label='Triangle'
-                        state={apuState.triangle}
-                        onUpdateAction={updateTriangle}
-                        disabled={!isRunning}
-                    />
-                    <NoiseStrip 
-                        label='Noise'
-                        state={apuState.noise}
-                        onUpdateAction={updateNoise}
-                        disabled={!isRunning}
-                    />
-                </div>
                 <ControlPanel 
                     channel={kbChannel}
                     enabled={isRunning}
                     onSetChannel={setKbChannel}
                     onSetEnabled={toggleRunning}
                 />
+                <div className="flex flex-row flex-wrap">
+                    <div className="flex flex-row flex-wrap">
+                        <PulseStrip 
+                            label='Pulse 1'
+                            state={apuState.pulse1}
+                            onUpdateAction={updatePulse1}
+                            disabled={!isRunning}
+                        />
+                        <PulseStrip 
+                            label='Pulse 2'
+                            state={apuState.pulse2}
+                            onUpdateAction={updatePulse2}
+                            disabled={!isRunning}
+                        />
+                    </div>
+                    <div className="flex flex-row flex-wrap">
+                        <TriangleStrip 
+                            label='Triangle'
+                            state={apuState.triangle}
+                            onUpdateAction={updateTriangle}
+                            disabled={!isRunning}
+                        />
+                        <NoiseStrip 
+                            label='Noise'
+                            state={apuState.noise}
+                            onUpdateAction={updateNoise}
+                            disabled={!isRunning}
+                        />
+                    </div>
+                </div>
             </Synth>
             <Keyboard 
                 channel={kbChannel} 

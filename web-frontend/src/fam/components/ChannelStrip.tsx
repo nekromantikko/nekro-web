@@ -22,7 +22,7 @@ export const ChannelStrip = wrapGenericMemo(<T extends Channel = Channel>({ labe
     return (
         <SynthPanel>
             <div className="flex flex-col items-center text-center text-nowrap w-full">
-                <div className="flex flex-row items-center justify-between w-full">
+                <div className="flex flex-row items-center justify-between w-full p-2">
                     <Label size='lg'>{label}</Label>
                     <div className="flex flex-row items-center gap-4">
                         <div className="flex flex-row items-center gap-2">
@@ -32,7 +32,7 @@ export const ChannelStrip = wrapGenericMemo(<T extends Channel = Channel>({ labe
                         <TactileButton disabled={disabled} onPress={toggleEnabled} />
                     </div>
                 </div>
-                <div className="flex flex-col w-full flex-[1_1_0]">
+                <div className="flex flex-wrap flex-[1_1_0]">
                     {children}
                 </div>
             </div>

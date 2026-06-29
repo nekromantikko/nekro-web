@@ -51,40 +51,34 @@ export const TriangleStrip = memo((props: TriangleStripProps) => {
             onUpdateAction={onUpdateAction}
             disabled={disabled}
         >
-            <div className="flex flex-col flex-[1_1_0] justify-between">
-                <div>
-                    <PanelSection label='linear counter'>
-                        <div className="flex flex-row grow">
-                            <Toggle label='ctrl/loop' value={state.loop} onPress={toggleLoop} disabled={disabled} />
-                        </div>
-                        <Stepper 
-                            label='load'
-                            value={state.linearCounterLoad}
-                            length={3}
-                            disabled={disabled}
-                            onIncrement={incrementLinearCounterLoad}
-                            onDecrement={decrementLinearCounterLoad}
-                        />
-                    </PanelSection>
+            <PanelSection label='linear counter'>
+                <div className="flex flex-row grow">
+                    <Toggle label='ctrl/loop' value={state.loop} onPress={toggleLoop} disabled={disabled} />
                 </div>
-                <div className="flex flex-row flex-wrap items-center">
-                    <PanelSection label='timer'>
-                        <Stepper
-                            label='period'
-                            value={state.timerPeriod}
-                            length={4}
-                            disabled={disabled}
-                            onIncrement={incrementTimerPeriod}
-                            onDecrement={decrementTimerPeriod}
-                        />
-                    </PanelSection>
-                    <LengthCounterSection
-                        lengthCounterLoad={state.lengthCounterLoad}
-                        onUpdateAction={onUpdateAction}
-                        disabled={disabled}
-                    />
-                </div>
-            </div>
+                <Stepper 
+                    label='load'
+                    value={state.linearCounterLoad}
+                    length={3}
+                    disabled={disabled}
+                    onIncrement={incrementLinearCounterLoad}
+                    onDecrement={decrementLinearCounterLoad}
+                />
+            </PanelSection>
+            <PanelSection label='timer'>
+                <Stepper
+                    label='period'
+                    value={state.timerPeriod}
+                    length={4}
+                    disabled={disabled}
+                    onIncrement={incrementTimerPeriod}
+                    onDecrement={decrementTimerPeriod}
+                />
+            </PanelSection>
+            <LengthCounterSection
+                lengthCounterLoad={state.lengthCounterLoad}
+                onUpdateAction={onUpdateAction}
+                disabled={disabled}
+            />
         </ChannelStrip>
     )
 });

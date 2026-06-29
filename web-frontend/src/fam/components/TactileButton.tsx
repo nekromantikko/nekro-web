@@ -19,8 +19,8 @@ export const TactileButton = memo(({ shape = 'circle', disabled, onPress }: Tact
         `}>
             <button
                 className={`
-                    h-8 
-                    ${isCircle ? 'w-8' : 'w-16'}
+                    h-6
+                    ${isCircle ? 'w-6' : 'w-12'}
                     ${isCircle ? 'rounded-full' : 'rounded-md'}
                     bg-mist-700
                     shadow-[3px_3px_8px_rgba(0,0,0,0.7),inset_0_0_2px_--theme(--color-mist-800),inset_-2px_-2px_1px_rgba(0,0,0,0.2),inset_2px_2px_1px_rgba(255,255,255,0.2)]

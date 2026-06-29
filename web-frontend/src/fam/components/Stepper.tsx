@@ -12,7 +12,7 @@ type StepperProps = {
     disabled?: boolean
 };
 
-const ArrowLeftIcon = ({ className = 'w-8 h-8 text-olive-300'}: { className?: string}) => (
+const ArrowLeftIcon = ({ className = 'w-6 h-6 text-olive-300'}: { className?: string}) => (
     <svg 
         viewBox="0 0 24 24" 
         className={className} 
@@ -23,7 +23,7 @@ const ArrowLeftIcon = ({ className = 'w-8 h-8 text-olive-300'}: { className?: st
     </svg>
 );
 
-const ArrowRightIcon = ({ className = 'w-8 h-8 text-olive-300' }: { className?: string }) => (
+const ArrowRightIcon = ({ className = 'w-6 h-6 text-olive-300' }: { className?: string }) => (
     <svg 
         viewBox="0 0 24 24" 
         className={className} 
@@ -37,7 +37,7 @@ const ArrowRightIcon = ({ className = 'w-8 h-8 text-olive-300' }: { className?: 
 export const Stepper = memo(({ label = '', value = 0, length = 4, onIncrement, onDecrement, disabled }: StepperProps) => {
     
     return (
-        <div className="flex flex-col items-center m-2">
+        <div className="flex flex-col items-center m-1">
             <div className="flex flex-row items-center">
                 <ArrowLeftIcon />
                 <Label>{label}</Label>
