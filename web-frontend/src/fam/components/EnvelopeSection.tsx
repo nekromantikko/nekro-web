@@ -19,13 +19,9 @@ type EnvelopeSectionProps = {
     onUpdateAction: (action: Partial<EnvelopeState> | ((prev: EnvelopeState) => Partial<EnvelopeState>)) => void
 };
 
-export const EnvelopeSection = memo(({ constantVolume, loop, volume, disabled, onUpdateAction}: EnvelopeSectionProps) => {
+export const EnvelopeSection = memo(({ constantVolume, volume, disabled, onUpdateAction}: EnvelopeSectionProps) => {
     const toggleConstantVolume = useCallback(() => {
-        onUpdateAction(prev => ({ constantVolume: !prev.constantVolume }));
-    }, [onUpdateAction]);
-
-    const toggleLoop = useCallback(() => {
-        onUpdateAction(prev => ({ loop: !prev.loop }));
+        onUpdateAction(prev => ({ constantVolume: !prev.constantVolume, loop: !prev.constantVolume }));
     }, [onUpdateAction]);
 
     const setVolume = useCallback((value: number) => {
@@ -35,16 +31,13 @@ export const EnvelopeSection = memo(({ constantVolume, loop, volume, disabled, o
     }, [onUpdateAction]);
 
     return (
-        <PanelSection label='envelope'>
-            <div className="flex flex-row flex-wrap items-baseline basis-1/3 grow shrink justify-between mx-2">
-                <div className="flex flex-col items-center gap-1 m-2 *:first:m-0">
-                    <Toggle label='envelope' value={!constantVolume} onPress={toggleConstantVolume} disabled={disabled} />
-                    <div className="flex flex-row items-center gap-2">
-                        <Led color='green' active={!disabled && constantVolume} />
-                        <Label>constvol</Label>
-                    </div>
+        <PanelSection label='volume'>
+            <div className="flex flex-col items-center gap-1 m-2 *:first:m-0">
+                <Toggle label='envelope' value={!constantVolume} onPress={toggleConstantVolume} disabled={disabled} />
+                <div className="flex flex-row items-center gap-2">
+                    <Led color='green' active={!disabled && constantVolume} />
+                    <Label size='sm'>constant</Label>
                 </div>
-                <Toggle label='loop' value={loop} onPress={toggleLoop} disabled={disabled} />
             </div>
             <Knob 
                 label='volume/decay'

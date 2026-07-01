@@ -40,7 +40,7 @@ export const Stepper = memo(({ label = '', value = 0, length = 4, onIncrement, o
         <div className="flex flex-col items-center m-1">
             <div className="flex flex-row items-center">
                 <ArrowLeftIcon />
-                <Label>{label}</Label>
+                <Label size='sm'>{label}</Label>
                 <ArrowRightIcon />
             </div>
             <div className="flex flex-row gap-2">

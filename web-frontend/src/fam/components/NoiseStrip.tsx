@@ -2,10 +2,7 @@ import React, { memo, useCallback } from 'react';
 import { ChannelStrip, ChannelStripProps } from './ChannelStrip';
 import { NoiseChannel } from '../apu';
 import { EnvelopeSection } from './EnvelopeSection';
-import { LengthCounterSection } from './LengthCounterSection';
-import { PanelSection } from './PanelSection';
 import { Toggle } from './Toggle';
-import { Stepper } from './Stepper';
 
 type NoiseStripProps = ChannelStripProps<NoiseChannel>;
 
@@ -18,20 +15,6 @@ export const NoiseStrip = memo((props: NoiseStripProps) => {
             onUpdateAction(prev => ({ mode: !prev.mode }));
         }, [onUpdateAction]);
 
-    const incrementPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.period < 0xF ? prev.period + 1 : 0;
-            return { period: newPeriod };
-        });
-    }, [onUpdateAction]);
-
-    const decrementPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.period > 0 ? prev.period - 1 : 0xF;
-            return { period: newPeriod };
-        });
-    }, [onUpdateAction]);
-
     return (
         <ChannelStrip<NoiseChannel>
             state={state}
@@ -39,30 +22,15 @@ export const NoiseStrip = memo((props: NoiseStripProps) => {
             onUpdateAction={onUpdateAction}
             disabled={disabled}
         >
+            <div className="flex flex-row">
+                <Toggle label='mode' value={state.mode} onPress={toggleMode} disabled={disabled} />
+            </div>
             <EnvelopeSection 
                 constantVolume={state.constantVolume}
                 loop={state.loop}
                 volume={state.volume}
                 disabled={disabled}
                 onUpdateAction={onUpdateAction}
-            />
-            <PanelSection label='timer'>
-                <div className="flex flex-row grow">
-                    <Toggle label='mode' value={state.mode} onPress={toggleMode} disabled={disabled} />
-                </div>
-                <Stepper
-                    label='period'
-                    value={state.period}
-                    length={2}
-                    disabled={disabled}
-                    onIncrement={incrementPeriod}
-                    onDecrement={decrementPeriod}
-                />
-            </PanelSection>
-            <LengthCounterSection
-                lengthCounterLoad={state.lengthCounterLoad}
-                onUpdateAction={onUpdateAction}
-                disabled={disabled}
             />
         </ChannelStrip>
     )

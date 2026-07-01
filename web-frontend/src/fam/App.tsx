@@ -304,20 +304,30 @@ const App = () => {
     }, [state]);
 
     const handlePlayNote = useCallback((channel: ChannelId, midiNote: number) => {
-        if (!isRunning) return;
-
         const period = midiNoteToNesPeriod(midiNote, nesCpuFreqNtsc);
 
         if (channel === 'pulse1' || channel === 'pulse2') {
-            updatePulse(channel, { timerPeriod: period });
+            updatePulse(channel, { enabled: true, timerPeriod: period, lengthCounterLoad: 1 });
         }
         if (channel === 'triangle') {
-            updateTriangle({ timerPeriod: period });
+            updateTriangle({ enabled: true, timerPeriod: period, lengthCounterLoad: 1 });
         }
         if (channel === 'noise') {
-            updateNoise(prev => ({ period: (midiNote & 0x0F), lengthCounterLoad: prev.lengthCounterLoad }) );
+            updateNoise({ enabled: true, period: (midiNote & 0x0F), lengthCounterLoad: 1 });
         }
-    }, [isRunning, updatePulse, updateTriangle, updateNoise]);
+    }, [updatePulse, updateTriangle, updateNoise]);
+
+    const handleStopNote = useCallback((channel: ChannelId) => {
+        if (channel === 'pulse1' || channel === 'pulse2') {
+            updatePulse(channel, { enabled: false });
+        }
+        if (channel === 'triangle') {
+            updateTriangle({ enabled: false });
+        }
+        if (channel === 'noise') {
+            updateNoise({ enabled: false });
+        }
+    }, [updatePulse, updateTriangle, updateNoise]);
 
     useEffect(() => {
         let audioContext: AudioContext | null = null;
@@ -359,7 +369,7 @@ const App = () => {
     }, []);
 
     return (
-        <div className="min-w-fit">
+        <div className="w-screen h-screen flex flex-col">
             <Synth>
                 <ControlPanel 
                     channel={kbChannel}
@@ -368,39 +378,36 @@ const App = () => {
                     onSetEnabled={toggleRunning}
                 />
                 <div className="flex flex-row flex-wrap">
-                    <div className="flex flex-row flex-wrap">
-                        <PulseStrip 
-                            label='Pulse 1'
-                            state={apuState.pulse1}
-                            onUpdateAction={updatePulse1}
-                            disabled={!isRunning}
-                        />
-                        <PulseStrip 
-                            label='Pulse 2'
-                            state={apuState.pulse2}
-                            onUpdateAction={updatePulse2}
-                            disabled={!isRunning}
-                        />
-                    </div>
-                    <div className="flex flex-row flex-wrap">
-                        <TriangleStrip 
-                            label='Triangle'
-                            state={apuState.triangle}
-                            onUpdateAction={updateTriangle}
-                            disabled={!isRunning}
-                        />
-                        <NoiseStrip 
-                            label='Noise'
-                            state={apuState.noise}
-                            onUpdateAction={updateNoise}
-                            disabled={!isRunning}
-                        />
-                    </div>
+                    <PulseStrip 
+                        label='Pulse 1'
+                        state={apuState.pulse1}
+                        onUpdateAction={updatePulse1}
+                        disabled={!isRunning}
+                    />
+                    <PulseStrip 
+                        label='Pulse 2'
+                        state={apuState.pulse2}
+                        onUpdateAction={updatePulse2}
+                        disabled={!isRunning}
+                    />
+                    <TriangleStrip 
+                        label='Triangle'
+                        state={apuState.triangle}
+                        onUpdateAction={updateTriangle}
+                        disabled={!isRunning}
+                    />
+                    <NoiseStrip 
+                        label='Noise'
+                        state={apuState.noise}
+                        onUpdateAction={updateNoise}
+                        disabled={!isRunning}
+                    />
                 </div>
             </Synth>
             <Keyboard 
                 channel={kbChannel} 
                 onPlayNote={handlePlayNote}
+                onStopNote={handleStopNote}
             />
             <p className="text-s text-end text-neutral-500 m-4">
                 Powered by <a className="text-orange-300" href='https://github.com/nekromantikko/fam'>fam</a>
