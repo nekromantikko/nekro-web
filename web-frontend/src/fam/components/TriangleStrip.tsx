@@ -1,10 +1,9 @@
 import React, { memo, useCallback } from 'react';
 import { ChannelStrip, ChannelStripProps } from './ChannelStrip';
 import { TriangleChannel } from '../apu';
-import { LengthCounterSection } from './LengthCounterSection';
 import { PanelSection } from './PanelSection';
-import { Stepper } from './Stepper';
 import { Toggle } from './Toggle';
+import { Knob } from './Knob';
 
 type TriangleStripProps = ChannelStripProps<TriangleChannel>;
 
@@ -16,32 +15,10 @@ export const TriangleStrip = memo((props: TriangleStripProps) => {
         onUpdateAction(prev => ({ loop: !prev.loop }));
     }, [onUpdateAction]);
 
-    const incrementLinearCounterLoad = useCallback(() => {
-        onUpdateAction(prev => {
-            const newVal = prev.linearCounterLoad < 0x7F ? prev.linearCounterLoad + 1 : 0;
-            return { linearCounterLoad: newVal };
-        });
-    }, [onUpdateAction]);
+    const setLengthCounterLoad = useCallback((value: number) => {
+        if (!Number.isFinite(value)) return;
 
-    const decrementLinearCounterLoad = useCallback(() => {
-        onUpdateAction(prev => {
-            const newVal = prev.linearCounterLoad > 0 ? prev.linearCounterLoad - 1 : 0x7F;
-            return { linearCounterLoad: newVal };
-        });
-    }, [onUpdateAction]);
-
-    const incrementTimerPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.timerPeriod < 0x7FF ? prev.timerPeriod + 1 : 0;
-            return { timerPeriod: newPeriod };
-        });
-    }, [onUpdateAction]);
-
-    const decrementTimerPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.timerPeriod > 0 ? prev.timerPeriod - 1 : 0x7FF;
-            return { timerPeriod: newPeriod };
-        });
+        onUpdateAction({ linearCounterLoad: Math.round(value) });
     }, [onUpdateAction]);
 
     return (
@@ -51,34 +28,19 @@ export const TriangleStrip = memo((props: TriangleStripProps) => {
             onUpdateAction={onUpdateAction}
             disabled={disabled}
         >
-            <PanelSection label='linear counter'>
-                <div className="flex flex-row grow">
-                    <Toggle label='ctrl/loop' value={state.loop} onPress={toggleLoop} disabled={disabled} />
+            <PanelSection label='duration'>
+                <div className="flex flex-row">
+                    <Toggle label='sustain' value={state.loop} onPress={toggleLoop} disabled={disabled} />
                 </div>
-                <Stepper 
-                    label='load'
+                <Knob
+                    label='length'
                     value={state.linearCounterLoad}
-                    length={3}
-                    disabled={disabled}
-                    onIncrement={incrementLinearCounterLoad}
-                    onDecrement={decrementLinearCounterLoad}
+                    min={0}
+                    max={0x7F}
+                    steps={11}
+                    onChange={setLengthCounterLoad}
                 />
             </PanelSection>
-            <PanelSection label='timer'>
-                <Stepper
-                    label='period'
-                    value={state.timerPeriod}
-                    length={4}
-                    disabled={disabled}
-                    onIncrement={incrementTimerPeriod}
-                    onDecrement={decrementTimerPeriod}
-                />
-            </PanelSection>
-            <LengthCounterSection
-                lengthCounterLoad={state.lengthCounterLoad}
-                onUpdateAction={onUpdateAction}
-                disabled={disabled}
-            />
         </ChannelStrip>
     )
 });

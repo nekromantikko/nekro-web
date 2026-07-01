@@ -3,9 +3,8 @@ import { ChannelStrip, ChannelStripProps } from './ChannelStrip';
 import { PulseChannel } from '../apu';
 import { PanelSection } from './PanelSection';
 import { EnvelopeSection } from './EnvelopeSection';
-import { Stepper } from './Stepper';
-import { LengthCounterSection } from './LengthCounterSection';
 import { Toggle } from './Toggle';
+import { Knob } from './Knob';
 
 type PulseStripProps = ChannelStripProps<PulseChannel>;
 
@@ -13,18 +12,10 @@ export const PulseStrip = memo((props: PulseStripProps) => {
 
     const { label, onUpdateAction, state, disabled } = props;
 
-    const incrementDutyCycle = useCallback(() => {
-        onUpdateAction(prev => {
-            const newCycle = prev.dutyCycle < 3 ? prev.dutyCycle + 1 : 0;
-            return { dutyCycle: newCycle };
-        });
-    }, [onUpdateAction]);
-
-    const decrementDutyCycle = useCallback(() => {
-        onUpdateAction(prev => {
-            const newCycle = prev.dutyCycle > 0 ? prev.dutyCycle - 1 : 3;
-            return { dutyCycle: newCycle };
-        });
+    const setDutyCycle = useCallback((value: number) => {
+        if (!Number.isFinite(value)) return;
+        
+        onUpdateAction({ dutyCycle: Math.round(value) });
     }, [onUpdateAction]);
 
     const toggleSweepEnabled = useCallback(() => {
@@ -35,46 +26,16 @@ export const PulseStrip = memo((props: PulseStripProps) => {
         onUpdateAction(prev => ({ sweepNegate: !prev.sweepNegate }));
     }, [onUpdateAction]);
 
-    const incrementSweepShift = useCallback(() => {
-        onUpdateAction(prev => {
-            const newShift = prev.sweepShift < 7 ? prev.sweepShift + 1 : 0;
-            return { sweepShift: newShift };
-        });
+    const setSweepShift = useCallback((value: number) => {
+        if (!Number.isFinite(value)) return;
+        
+        onUpdateAction({ sweepShift: Math.round(value) });
     }, [onUpdateAction]);
 
-    const decrementSweepShift = useCallback(() => {
-        onUpdateAction(prev => {
-            const newShift = prev.sweepShift > 0 ? prev.sweepShift - 1 : 7;
-            return { sweepShift: newShift };
-        });
-    }, [onUpdateAction]);
-
-    const incrementSweepPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.sweepPeriod < 7 ? prev.sweepPeriod + 1 : 0;
-            return { sweepPeriod: newPeriod };
-        });
-    }, [onUpdateAction]);
-
-    const decrementSweepPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.sweepPeriod > 0 ? prev.sweepPeriod - 1 : 7;
-            return { sweepPeriod: newPeriod };
-        });
-    }, [onUpdateAction]);
-
-    const incrementTimerPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.timerPeriod < 0x7FF ? prev.timerPeriod + 1 : 0;
-            return { timerPeriod: newPeriod };
-        });
-    }, [onUpdateAction]);
-
-    const decrementTimerPeriod = useCallback(() => {
-        onUpdateAction(prev => {
-            const newPeriod = prev.timerPeriod > 0 ? prev.timerPeriod - 1 : 0x7FF;
-            return { timerPeriod: newPeriod };
-        });
+    const setSweepPeriod = useCallback((value: number) => {
+        if (!Number.isFinite(value)) return;
+        
+        onUpdateAction({ sweepPeriod: Math.round(value) });
     }, [onUpdateAction]);
 
     return (
@@ -84,6 +45,16 @@ export const PulseStrip = memo((props: PulseStripProps) => {
             onUpdateAction={onUpdateAction}
             disabled={disabled}
         >
+            <PanelSection label='waveform'>
+                <Knob 
+                    label='duty'
+                    value={state.dutyCycle}
+                    min={0}
+                    max={3}
+                    steps={4}
+                    onChange={setDutyCycle}
+                />
+            </PanelSection>
             <EnvelopeSection 
                 constantVolume={state.constantVolume}
                 loop={state.loop}
@@ -91,41 +62,31 @@ export const PulseStrip = memo((props: PulseStripProps) => {
                 disabled={disabled}
                 onUpdateAction={onUpdateAction}
             />
-            <PanelSection label='duty'>
-                <Stepper 
-                    label='cycle'
-                    value={state.dutyCycle}
-                    length={1}
-                    disabled={disabled}
-                    onIncrement={incrementDutyCycle}
-                    onDecrement={decrementDutyCycle}
-                />
-            </PanelSection>
             <PanelSection label='sweep'>
                 <div className="flex flex-row flex-wrap items-center basis-1/3 grow shrink justify-center">
                     <Toggle label='enable' value={state.sweepEnabled} onPress={toggleSweepEnabled} disabled={disabled} />
                     <Toggle label='negate' value={state.sweepNegate} onPress={toggleSweepNegate} disabled={disabled} />
                 </div>
                 <div className="flex flex-row flex-wrap items-center basis-2/3 grow shrink justify-center">
-                    <Stepper 
+                    <Knob 
                         label='shift'
                         value={state.sweepShift}
-                        length={1}
-                        disabled={disabled}
-                        onIncrement={incrementSweepShift}
-                        onDecrement={decrementSweepShift}
+                        min={0}
+                        max={7}
+                        steps={8}
+                        onChange={setSweepShift}
                     />
-                    <Stepper 
+                    <Knob 
                         label='period'
                         value={state.sweepPeriod}
-                        length={1}
-                        disabled={disabled}
-                        onIncrement={incrementSweepPeriod}
-                        onDecrement={decrementSweepPeriod}
+                        min={0}
+                        max={7}
+                        steps={8}
+                        onChange={setSweepPeriod}
                     />
                 </div>
             </PanelSection>
-            <PanelSection label='timer'>
+            {/* <PanelSection label='timer'>
                 <Stepper 
                     label='period'
                     value={state.timerPeriod}
@@ -134,12 +95,12 @@ export const PulseStrip = memo((props: PulseStripProps) => {
                     onIncrement={incrementTimerPeriod}
                     onDecrement={decrementTimerPeriod}
                 />
-            </PanelSection>
-            <LengthCounterSection 
+            </PanelSection> */}
+            {/* <LengthCounterSection 
                 lengthCounterLoad={state.lengthCounterLoad}
                 onUpdateAction={onUpdateAction}
                 disabled={disabled}
-            />
+            /> */}
         </ChannelStrip>
     )
 });

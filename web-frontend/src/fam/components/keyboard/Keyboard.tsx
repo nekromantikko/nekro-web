@@ -6,9 +6,10 @@ import { MidiDeviceSelector } from './MidiSelector';
 type KeyboardProps = {
     channel: ChannelId,
     onPlayNote: (channel: ChannelId, midiNote: number) => void,
+    onStopNote: (channel: ChannelId) => void
 }
 
-export const Keyboard = memo((props: KeyboardProps) => {
+export const Keyboard = memo(({ channel, onPlayNote, onStopNote }: KeyboardProps) => {
     const totalKeys = 97;
     const whiteKeys = 57;
     const notePattern = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -21,12 +22,19 @@ export const Keyboard = memo((props: KeyboardProps) => {
     const [activeNotes, setActiveNotes] = useState<Map<number, number>>(new Map());
 
     // Stable container for changing prop callback
-    const playNoteRef = useRef(props.onPlayNote);
+    const playNoteRef = useRef(onPlayNote);
 
     // Updates reference to the latest one
     useEffect(() => {
-        playNoteRef.current = props.onPlayNote;
-    });
+        playNoteRef.current = onPlayNote;
+    }, [onPlayNote]);
+
+    // Stop note if none active
+    useEffect(() => {
+        if (activeNotes.size === 0) {
+            onStopNote(channel);
+        }
+    }, [activeNotes, channel, onStopNote]);
 
     const handlePlayNote = useCallback((midiNote: number) => {
         setActiveNotes(prev => {
@@ -36,8 +44,8 @@ export const Keyboard = memo((props: KeyboardProps) => {
             return next;
         });
 
-        playNoteRef.current(props.channel, midiNote);
-    }, [props.channel]);
+        playNoteRef.current(channel, midiNote);
+    }, [channel]);
 
     const handleStopNote = useCallback((midiNote: number) => {
         setActiveNotes(prev => {
