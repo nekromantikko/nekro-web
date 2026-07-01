@@ -2,8 +2,8 @@ import React, { memo, useCallback } from 'react';
 import { PanelSection } from './PanelSection';
 import { Led } from './Led';
 import { Label } from './Label';
-import { Stepper } from './Stepper';
 import { Toggle } from './Toggle';
+import { Knob } from './Knob';
 
 type EnvelopeState = {
     constantVolume: boolean, 
@@ -28,18 +28,10 @@ export const EnvelopeSection = memo(({ constantVolume, loop, volume, disabled, o
         onUpdateAction(prev => ({ loop: !prev.loop }));
     }, [onUpdateAction]);
 
-    const incrementVolume = useCallback(() => {
-        onUpdateAction(prev => {
-            const newVolume = prev.volume < 0xF ? prev.volume + 1 : 0;
-            return { volume: newVolume };
-        });
-    }, [onUpdateAction]);
+    const setVolume = useCallback((value: number) => {
+        if (!Number.isFinite(value)) return;
 
-    const decrementVolume = useCallback(() => {
-        onUpdateAction(prev => {
-            const newVolume = prev.volume > 0 ? prev.volume - 1 : 0xF;
-            return { volume: newVolume };
-        });
+        onUpdateAction({ volume: Math.round(value) });
     }, [onUpdateAction]);
 
     return (
@@ -54,13 +46,13 @@ export const EnvelopeSection = memo(({ constantVolume, loop, volume, disabled, o
                 </div>
                 <Toggle label='loop' value={loop} onPress={toggleLoop} disabled={disabled} />
             </div>
-            <Stepper 
-                label='period/vol'
+            <Knob 
+                label='volume/decay'
                 value={volume}
-                length={2}
-                disabled={disabled}
-                onIncrement={incrementVolume}
-                onDecrement={decrementVolume}
+                min={0}
+                max={0xF}
+                steps={0x10}
+                onChange={setVolume}
             />
         </PanelSection>
     )
