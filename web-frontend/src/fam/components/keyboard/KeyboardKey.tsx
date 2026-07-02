@@ -19,19 +19,28 @@ export const KeyboardKey = memo((props: KeyboardKeyProps) => {
         ? 'shadow-[1px_1px_2px_rgba(0,0,0,0.5),inset_0_2px_4px_rgba(0,0,0,0.6),inset_1px_1px_1px_rgba(0,0,0,0.4)]'
         : 'shadow-[3px_3px_8px_rgba(0,0,0,0.7),inset_0_0_2px_--theme(--color-mist-800),inset_-2px_-2px_1px_rgba(0,0,0,0.2),inset_2px_2px_1px_rgba(255,255,255,0.2)]';
 
-    const handlePointerDown = () => {
-        props.onPlayNote(props.midiNote);
-    }
-
     const handlePointerEnter = (e: React.PointerEvent) => {
         // Check primary button / touch
         if (e.buttons === 1) {
             props.onPlayNote(props.midiNote);
         }
+        e.stopPropagation();
+        e.preventDefault();
     }
 
-    const handlePointerUpOrLeave = () => {
+    const handlePointerUpOrLeave = (e: React.PointerEvent) => {
         props.onStopNote(props.midiNote);
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    const handlePointerCapture = (e: React.PointerEvent) => {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    }
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
     }
 
     return (
@@ -57,10 +66,11 @@ export const KeyboardKey = memo((props: KeyboardKeyProps) => {
                     cursor-pointer
                 `}
                 style={{ minWidth: props.isBlack ? `${props.baseWidthPercent / 2}cqw` : '100%' }}
-                onPointerDown={handlePointerDown}
                 onPointerEnter={handlePointerEnter}
-                onPointerUp={handlePointerUpOrLeave}
                 onPointerLeave={handlePointerUpOrLeave}
+                onPointerUp={handlePointerUpOrLeave}
+                onGotPointerCapture={handlePointerCapture}
+                onContextMenu={handleContextMenu}
             />
         </div>
     )
