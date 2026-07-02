@@ -37,7 +37,7 @@ export const Knob = memo(({ value = 0, steps = 11, min = -1, max = 1, label = ''
     const [dragState, setDragState] = useState<KnobDragState>({ dragging: false, startY: 0, startValue: 0, currentY: 0});
     const ref = useRef<HTMLDivElement>(null);
 
-    const onPointerDown = (e: React.PointerEvent) => {
+    const handlePointerDown = (e: React.PointerEvent) => {
         if (e.button !== 0 || e.target != ref.current) return;
 
         ref.current.setPointerCapture(e.pointerId);
@@ -52,7 +52,7 @@ export const Knob = memo(({ value = 0, steps = 11, min = -1, max = 1, label = ''
         e.preventDefault();
     }
 
-    const onPointerUp = (e: React.PointerEvent) => {
+    const handlePointerUp = (e: React.PointerEvent) => {
         if (e.button !== 0 || e.target != ref.current) return;
 
         try {
@@ -71,7 +71,7 @@ export const Knob = memo(({ value = 0, steps = 11, min = -1, max = 1, label = ''
         e.preventDefault();
     }
 
-    const onPointerMove = (e: React.PointerEvent) => {
+    const handlePointerMove = (e: React.PointerEvent) => {
         if (!dragState.dragging) return;
 
         const delta = e.screenY - dragState.startY;
@@ -80,6 +80,11 @@ export const Knob = memo(({ value = 0, steps = 11, min = -1, max = 1, label = ''
         if (onChange) onChange(newValue);
 
         setDragState(prev => ({ ...prev, currentY: e.screenY }));
+    }
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
     }
 
     const circleSegment = useMemo(() => {
@@ -148,9 +153,10 @@ export const Knob = memo(({ value = 0, steps = 11, min = -1, max = 1, label = ''
                     relative
                     touch-none
                 "
-                onPointerDown={onPointerDown}
-                onPointerUp={onPointerUp}
-                onPointerMove={onPointerMove}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                onPointerMove={handlePointerMove}
+                onContextMenu={handleContextMenu}
             >
                 <div 
                     className="absolute h-1/2 w-1 bg-olive-300 rounded-t-full pointer-events-none touch-none"
