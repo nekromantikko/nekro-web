@@ -4,7 +4,6 @@ FetchContent_Declare(
     fam
     GIT_REPOSITORY https://github.com/nekromantikko/fam.git
     GIT_TAG        e060c28dcc9596c76a7bcd86030a98c3ba19ccba
-    GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(fam)
 
