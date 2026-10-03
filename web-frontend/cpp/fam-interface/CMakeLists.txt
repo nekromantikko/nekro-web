@@ -3,7 +3,7 @@ include(FetchContent)
 FetchContent_Declare(
     fam
     GIT_REPOSITORY https://github.com/nekromantikko/fam.git
-    GIT_TAG        e060c28dcc9596c76a7bcd86030a98c3ba19ccba
+    GIT_TAG        225db2c7767fb71006efbdb0e0ea00ce5392483b
 )
 FetchContent_MakeAvailable(fam)
 
@@ -19,7 +19,7 @@ target_link_options(fam-interface PRIVATE
     -sEXPORT_NAME=FamInterface
     -sENVIRONMENT=worklet
     -sEXPORTED_RUNTIME_METHODS=ccall,cwrap,HEAPF32
-    -sEXPORTED_FUNCTIONS=['_init','_writeRegister','_renderAudio','_malloc']
+    -sEXPORTED_FUNCTIONS=['_init','_writeRegister','_shutdown','_renderAudio','_malloc','_free']
     -sMODULARIZE
     -sSINGLE_FILE
     -sALLOW_MEMORY_GROWTH=0

@@ -331,6 +331,7 @@ const App = () => {
 
     useEffect(() => {
         let audioContext: AudioContext | null = null;
+        let workletNode: AudioWorkletNode | null = null;
 
         const initializeState = async () => {
             console.log("Initializing state...");
@@ -338,7 +339,7 @@ const App = () => {
 
             await audioContext.audioWorklet.addModule(processorUrl);
 
-            const workletNode = new AudioWorkletNode(audioContext, 'fam-audio-processor', {
+            workletNode = new AudioWorkletNode(audioContext, 'fam-audio-processor', {
                 outputChannelCount: [2]
             });
 
@@ -360,6 +361,10 @@ const App = () => {
         return () => {
             // Make sure initialization is done before deinitializing
             initPromise.then(() => {
+                if (workletNode) {
+                    workletNode.port.postMessage({ type: 'DISPOSE' });
+                    workletNode.disconnect();
+                }
                 if (audioContext) {
                     console.log("Closing audio context...");
                     audioContext.close().then(() => console.log("Audio context closed"));
