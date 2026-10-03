@@ -16,15 +16,21 @@ class FamAudioProcessor extends AudioWorkletProcessor {
     private bufferPtr: number = 0;
     private bufferView: Float32Array | null = null;
     private isReady = false;
+    private isDisposed = false;
 
     constructor() {
         super();
         this.initEngine();
 
         this.port.onmessage = (event) => {
-            if (!this.isReady) return;
-
             const { type, address, value } = event.data;
+
+            if (type === 'DISPOSE') {
+                this.dispose();
+                return;
+            }
+
+            if (!this.isReady) return;
 
             if (type === 'REG_WRITE') {
                 this.wasmModule._writeRegister(address, value);
@@ -34,6 +40,8 @@ class FamAudioProcessor extends AudioWorkletProcessor {
 
     async initEngine() {
         this.wasmModule = await FamInterfaceFactory();
+        if (this.isDisposed) return; // Disposed while loading
+
         this.wasmModule._init(sampleRate);
 
         this.bufferPtr = this.wasmModule._malloc(128 * 4); // Buffer size is always 128
@@ -42,8 +50,21 @@ class FamAudioProcessor extends AudioWorkletProcessor {
         this.isReady = true;
     }
 
+    dispose() {
+        this.isDisposed = true;
+        if (!this.isReady) return;
+
+        this.isReady = false;
+        this.wasmModule._free(this.bufferPtr);
+        this.wasmModule._shutdown();
+        this.bufferView = null;
+        this.wasmModule = null;
+    }
+
     process(inputs: Float32Array[][], outputs: Float32Array[][], param: Record<string, Float32Array>): boolean {
-        if (!this.isReady || this.bufferView == null) return false;
+        // Returning false tells the browser this node is finished, so only do it after disposal
+        if (this.isDisposed) return false;
+        if (!this.isReady || this.bufferView == null) return true;
 
         const output = outputs[0]; // TODO: User picks output device?
         const channelLeft = output[0];
