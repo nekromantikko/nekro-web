@@ -7,7 +7,7 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig([
     {
-        ignores: ['src/wasm/**/*']
+        ignores: ['src/wasm/**/*', 'build/**/*', 'dist/**/*', 'public/fam-interface.aw.js']
     },
     {
         files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"], 
@@ -20,8 +20,11 @@ export default defineConfig([
         },
         extends: ["js/recommended"], 
         languageOptions: { 
-            globals: globals.browser 
-        }, 
+            globals: globals.browser
+        },
+        settings: {
+            react: { version: 'detect' }
+        },
         rules: {
             'react-hooks/rules-of-hooks': 'error',
             'react-hooks/exhaustive-deps': 'warn'
